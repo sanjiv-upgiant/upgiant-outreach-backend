@@ -3,6 +3,15 @@ import { catchAsync } from "../utils";
 import { Request, Response } from "express";
 import { createCampaign } from "./campaign.service";
 import scrapeQueue from "./../../crawler/queue";
+import { JobOptions } from "bull";
+
+const jobOptions: JobOptions = {
+    attempts: 2,
+    backoff: {
+        type: "exponential",
+        delay: 10000
+    }
+}
 
 export const createCampaignController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
@@ -12,7 +21,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
         scrapeQueue.add({
             url,
             campaign: campaign.id
-        })
+        }, jobOptions)
     }
     res.status(httpStatus.CREATED).send(campaign);
 });

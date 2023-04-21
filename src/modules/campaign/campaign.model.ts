@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import toJSON from '../toJSON/toJSON';
 import paginate from '../paginate/paginate';
-import { CampaignStatus, ICampaignDoc, ICampaignModel } from './campaign.interfaces';
+import { CampaignStatus, ICampaignDoc, ICampaignModel, SearchType } from './campaign.interfaces';
 
 const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
     {
@@ -21,6 +21,17 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: String,
             enum: CampaignStatus,
             default: CampaignStatus.PROGRESS
+        },
+        objective: String,
+        audienceFilters: {
+            seniority: String,
+            title: String,
+            department: String,
+        },
+        searchType: {
+            type: String,
+            enum: SearchType,
+            default: SearchType.DOMAINS
         }
     },
     {

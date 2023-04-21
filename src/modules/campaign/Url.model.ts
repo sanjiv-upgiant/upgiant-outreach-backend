@@ -18,7 +18,16 @@ const urlSchema = new mongoose.Schema<IUrlDoc, IUrlModel>(
         },
         html: {
             type: String,
-        }
+        },
+        title: {
+            type: String,
+        },
+        body: {
+            type: String,
+        },
+        info: {
+            type: Object,
+        },
     },
     {
         timestamps: true,

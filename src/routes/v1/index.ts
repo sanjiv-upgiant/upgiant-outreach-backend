@@ -1,6 +1,8 @@
 import express, { Router } from 'express';
 import authRoute from './auth.route';
 import campaignRoute from './campaign.route';
+import integrationRoute from './integration.route';
+
 
 const router = express.Router();
 
@@ -17,6 +19,10 @@ const defaultIRoute: IRoute[] = [
   {
     path: '/campaign',
     route: campaignRoute,
+  },
+  {
+    path: '/integration',
+    route: integrationRoute,
   },
 ];
 
