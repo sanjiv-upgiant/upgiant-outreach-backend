@@ -6,6 +6,6 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.post("/add-integration", auth(), addIntegrationController)
+router.post("/add", auth(), addIntegrationController)
 
 export default router;
