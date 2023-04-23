@@ -1,10 +1,10 @@
 import axios from "axios";
 import { stringify } from "querystring";
-import { IntegrationOutputModel } from "./../../modules/integrations/integration.model";
-import redisClient from './../../redis';
+import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
+import redisClient from '../../redis';
+import { CACHE_TTL } from "../../constants";
 
 const client = redisClient.client;
-const CACHE_TTL = 2 * 24 * 60 * 60; // 2 days in seconds
 
 export const getSnovioAccessTokenIfNeeded = async (integrationId: string, clientId: string, clientSecret: string) => {
     const accessToken = await client.get(integrationId + 'snovioAccessToken');

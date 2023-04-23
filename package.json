@@ -130,6 +130,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "querystring": "^0.2.1",
     "redis": "^4.6.5",
+    "serpapi": "^1.1.1",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.2.0",
     "validator": "^13.7.0",
