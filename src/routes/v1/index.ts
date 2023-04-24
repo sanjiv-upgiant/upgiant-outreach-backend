@@ -2,7 +2,9 @@ import express, { Router } from 'express';
 import authRoute from './auth.route';
 import campaignRoute from './campaign.route';
 import integrationRoute from './integration.route';
+import { parseSerpResponse } from './../../app/serp/serpapi';
 
+console.log(parseSerpResponse);
 
 const router = express.Router();
 

@@ -6,7 +6,8 @@ export enum IntegrationTypes {
     OPENAI = "OPENAI",
     HUNTER = "HUNTER",
     APOLLO = "APOLLO",
-    LEMLIST = "LEMLIST"
+    LEMLIST = "LEMLIST",
+    SERPAPI = "SERPAPI"
 }
 
 export interface IIntegration {

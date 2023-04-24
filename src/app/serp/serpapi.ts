@@ -1,5 +1,6 @@
+import { extractEmployeesInformationFromSerp } from "./../../modules/langchain/serp";
 import { CACHE_TTL } from "./../../constants";
-import { IntegrationOutputModel } from "./../../modules/integrations/integration.model";
+import IntegrationModel, { IntegrationOutputModel } from "./../../modules/integrations/integration.model";
 import { BaseResponse, GoogleParameters, getJson } from "serpapi";
 
 interface SerpResponse {
@@ -11,7 +12,8 @@ interface SerpResponse {
     department?: string
 }
 
-const getSerpApiResponse = async ({ domain, position, title, department, accessToken }: SerpResponse) => {
+const getSerpQuery = (params: Omit<SerpResponse, "accessToken">) => {
+    const { domain, position, title, department } = params;
     let query = `${domain} linkedin `;
     if (position) {
         query += position + " ";
@@ -22,19 +24,27 @@ const getSerpApiResponse = async ({ domain, position, title, department, accessT
     if (department) {
         query += department + " ";
     }
-    const response = await getJson("google", { q: `${query}`, api_key: accessToken });
-    return response;
+    query = query.trim();
+    return query;
 }
 
-export const cacheSerpApiResponse = async (params: SerpResponse) => {
+const getQueryAndSerpApiResponse = async (params: SerpResponse) => {
+    const { accessToken } = params;
+    const query = getSerpQuery(params)
+    const response = await getJson("google", { q: `${query}`, api_key: accessToken });
+    return [query, response];
+}
+
+export const cacheSerpApiResponseWithQuery = async (params: SerpResponse) => {
     const key = `${params.domain} | ${params.department} | ${params.position} | ${params.title}`;
 
     const cachedResult = await IntegrationOutputModel.findOne({ key });
     if (cachedResult && (Date.now() - cachedResult.updatedAt.getTime()) / 1000 < CACHE_TTL) {
-        return cachedResult.result;
+        const query = getSerpQuery(params);
+        return [query, cachedResult.result];
     }
 
-    const result = await getSerpApiResponse(params);
+    const [query, result] = await getQueryAndSerpApiResponse(params);
 
     await IntegrationOutputModel.findOneAndUpdate(
         { key },
@@ -42,9 +52,60 @@ export const cacheSerpApiResponse = async (params: SerpResponse) => {
         { upsert: true }
     );
 
-    return result;
+    return [query, result];
 };
 
-export const parseSerpResponse = async (serpResponse: BaseResponse<GoogleParameters>) => {
+export const parseSerpResponse = (serpResponse: BaseResponse<GoogleParameters>) => {
     const organicResults = serpResponse["organic_results"];
+    let response = "";
+    for (const organicResult of organicResults) {
+        const title = organicResult["title"];
+        const snippet = organicResult["snippet"];
+        response += title + "\n";
+        response += snippet + "\n";
+        const siteLinkInlines = organicResult?.["sitelinks"]?.["inline"];
+        const siteLinkExpanded = organicResult?.["sitelinks"]?.["expanded"];
+        if (siteLinkInlines) {
+            for (const sitelink of siteLinkInlines) {
+                const title = sitelink["title"];
+                response += title + '\n';
+            }
+        }
+        if (siteLinkExpanded) {
+            for (const sitelink of siteLinkExpanded) {
+                const title = sitelink["title"];
+                const snippet = sitelink["snippet"];
+                response += title + '\n';
+                response += snippet + '\n';
+            }
+        }
+    }
+    return response.trim();
 }
+
+
+(async () => {
+    const user = "644125a75daaa50147f25a88";
+    const integration = await IntegrationModel.findOne({ user, type: "SERPAPI" });
+    if (integration) {
+        const [query, response] = await cacheSerpApiResponseWithQuery({
+            integration: integration.id,
+            domain: "https://missionworkshop.com",
+            accessToken: integration.accessToken,
+            position: "Manager",
+            department: "Executive"
+        });
+        const results = parseSerpResponse(response);
+        const employeesInformation = await extractEmployeesInformationFromSerp(query, results)
+        console.log(employeesInformation, 'haha');
+    }
+})
+
+//  [
+// [1]     {"firstName":"Josh","lastName":"Margolis","designation":"Operations Executive"},
+// [1]     {"firstName":"Pamela","lastName":"Comstock","designation":"Director, Production Apparel"},
+// [1]     {"firstName":"Daria","lastName":"Walls Torres","designation":"Managing Partner"},
+// [1]     {"firstName":"Darius","lastName":"Pearson","designation":"Senior Brand Manager"},
+// [1]     {"firstName":"Anders","lastName":"Johnson","designation":"Customer Experience Manager"},
+// [1]     {"firstName":"Lyndi","lastName":"Priest","designation":"Director, Design"}
+// [1] ]

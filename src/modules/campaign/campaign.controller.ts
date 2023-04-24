@@ -9,7 +9,7 @@ const jobOptions: JobOptions = {
     attempts: 2,
     backoff: {
         type: "exponential",
-        delay: 10000
+        delay: 2000
     }
 }
 
@@ -20,7 +20,8 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     for (const url of urls) {
         scrapeQueue.add({
             url,
-            campaign: campaign.id
+            campaign: campaign.id,
+            searchType: campaign.searchType
         }, jobOptions)
     }
     res.status(httpStatus.CREATED).send(campaign);

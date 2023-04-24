@@ -17,6 +17,7 @@ export interface ICampaign {
     name: string;
     urls: string[];
     status: CampaignStatus,
+    modelName: string,
     objective: string;
     audienceFilters: {
         seniority: string,
@@ -24,6 +25,11 @@ export interface ICampaign {
         department: string,
     },
     searchType: SearchType
+}
+
+export enum UrlStatus {
+    QUEUED,
+    SUMMARY_EXTRACTED,
 }
 
 export interface ICampaignDoc extends ICampaign, Document {
@@ -34,17 +40,28 @@ export interface ICampaignModel extends Model<ICampaignDoc> {
 }
 
 export interface IUrl {
-    campaign: string,
     url: string,
     html: string,
     title: string,
     body: string,
     info: { [x: string]: any },
+    status: UrlStatus
 }
 
 export interface IUrlDoc extends IUrl, Document {
 }
 
 export interface IUrlModel extends Model<IUrlDoc> {
+    _id: string
+}
+export interface ICampaignUrl {
+    url: string,
+    campaign: string,
+}
+
+export interface ICampaignUrlDoc extends ICampaignUrl, Document {
+}
+
+export interface ICampaignUrlModel extends Model<ICampaignUrlDoc> {
     _id: string
 }

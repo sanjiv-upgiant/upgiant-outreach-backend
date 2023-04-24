@@ -14,6 +14,9 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: String,
             required: true,
         },
+        modelName: {
+            type: String,
+        },
         urls: {
             type: [String],
         },
@@ -32,7 +35,7 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: String,
             enum: SearchType,
             default: SearchType.DOMAINS
-        }
+        },
     },
     {
         timestamps: true,

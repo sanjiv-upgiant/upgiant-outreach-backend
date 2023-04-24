@@ -3,8 +3,15 @@ import { stringify } from "querystring";
 import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
 import redisClient from '../../redis';
 import { CACHE_TTL } from "../../constants";
+import { getAxiosInstance } from "../../modules/limitedAxios";
 
 const client = redisClient.client;
+
+interface IRateLimitConfig {
+    maxRequests: number,
+    hours: number
+}
+
 
 export const getSnovioAccessTokenIfNeeded = async (integrationId: string, clientId: string, clientSecret: string) => {
     const accessToken = await client.get(integrationId + 'snovioAccessToken');
@@ -42,15 +49,18 @@ const getSnovioAccessToken = async (clientId: string, clientSecret: string) => {
     }
 }
 
-const getEmailFinderFromFirstNameAndLastName = async (accessToken: string, firstName: string, lastName: string, domain: string) => {
+const getEmailFinderFromFirstNameAndLastName = async (accessToken: string, firstName: string, lastName: string, domain: string, rateLimit: IRateLimitConfig = {
+    maxRequests: 200, hours: 1
+}) => {
     const body = {
-        'access_token': accessToken,
+        access_token: accessToken,
         domain,
         firstName,
         lastName
     };
     try {
-        const response = await axios.post('https://api.snov.io/v1/get-emails-from-names', body);
+        const axiosInstance = getAxiosInstance(accessToken, rateLimit.maxRequests, rateLimit.hours);
+        const response = await axiosInstance.post('https://api.snov.io/v1/get-emails-from-names', body);
         return response.data;
     }
     catch {
@@ -116,14 +126,3 @@ export const cacheEmailsFinder = async (integration: string, accessToken: string
     return result;
 };
 
-// (async () => {
-//     const clientId = "eb84e5e3cd921de101853c23c2025a8d";
-//     const integration = await IntegrationModel.findOne({ clientId });
-//     if (integration) {
-//         const accessToken = await getSnovioAccessTokenIfNeeded(integration.id, integration.clientId, integration.clientSecret);
-//         if (accessToken) {
-//             const res = await cacheDomainSearchedEmails(integration.id, accessToken, "https://upgiant.com", ["Marketing Consultant"]);
-//             console.log(res)
-//         }
-//     }
-// })()
