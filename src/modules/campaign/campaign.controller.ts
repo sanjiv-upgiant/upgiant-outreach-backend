@@ -21,13 +21,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
         scrapeQueue.add({
             user,
             url,
-            campaign: campaign.id,
-            searchType: campaign.searchType,
-            emailSearchService: campaign.emailSearchService,
-            audienceFilters: campaign.audienceFilters,
-            includeDetails: campaign.includeDetails,
-            outreachAgent: campaign.outreachAgent,
-            campaignId: campaign.campaignId
+            campaignJson: campaign.toJSON()
         }, jobOptions)
     }
     res.status(httpStatus.CREATED).send(campaign);

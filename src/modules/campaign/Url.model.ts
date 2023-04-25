@@ -16,6 +16,27 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
         required: true,
         trim: true
     },
+    emailSubject: {
+        type: String,
+    },
+    emailBody: {
+        type: String,
+    },
+    emailExtracted: {
+        type: Boolean,
+        default: false
+    },
+    isCompleted: {
+        type: Boolean,
+        default: false
+    },
+    error: {
+        type: Boolean,
+        default: false
+    },
+    errorReason: {
+        type: String,
+    },
 })
 
 const urlSchema = new mongoose.Schema<IUrlDoc, IUrlModel>(
@@ -41,6 +62,7 @@ const urlSchema = new mongoose.Schema<IUrlDoc, IUrlModel>(
             type: Number,
             enum: UrlStatus
         }
+
     },
     {
         timestamps: true,

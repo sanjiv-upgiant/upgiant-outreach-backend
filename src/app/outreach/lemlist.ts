@@ -11,7 +11,7 @@ interface LeadData {
 }
 
 
-export const addLeadToCampaign = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
+export const addLeadToCampaignUsingLemlist = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
     try {
         const response = await axios.post(
             `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}`,

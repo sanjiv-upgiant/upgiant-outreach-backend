@@ -28,7 +28,7 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         objective: String,
         audienceFilters: {
             seniority: String,
-            title: String,
+            position: String,
             department: String,
         },
         searchType: {

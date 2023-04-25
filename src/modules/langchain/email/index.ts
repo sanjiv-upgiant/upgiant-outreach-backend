@@ -37,6 +37,11 @@ export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, busines
 
 
     const response = await chat.call(chatMessages.toChatMessages());
-    return response.text;
+
+    return removePlaceholders(response?.text || "");
+}
+
+const removePlaceholders = (text: string) => {
+    return text.replace(/\[[^\]]*\]/g, '');
 }
 

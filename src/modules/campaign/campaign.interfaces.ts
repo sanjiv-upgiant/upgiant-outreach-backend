@@ -33,7 +33,7 @@ export interface ICampaign {
     objective: string;
     audienceFilters: {
         seniority: string,
-        positions: string[],
+        position: string,
         department: string,
     },
     searchType: SearchType,
@@ -73,6 +73,12 @@ export interface IUrlModel extends Model<IUrlDoc> {
 export interface ICampaignUrl {
     url: string,
     campaign: string,
+    emailSubject: string,
+    emailBody: string,
+    emailExtracted: boolean,
+    isCompleted: boolean,
+    error: boolean,
+    errorReason: string
 }
 
 export interface ICampaignUrlDoc extends ICampaignUrl, Document {

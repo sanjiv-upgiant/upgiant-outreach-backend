@@ -1,15 +1,18 @@
 import Queue from 'bull';
+import { cacheEmailsFinder, getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch, parseEmailsFromSnovIOEmailSearch } from './../app/email-search/snovio';
+import { addLeadToCampaignUsingLemlist } from './../app/outreach/lemlist';
+import { cacheSerpApiResponseWithQuery, parseSerpResponse } from './../app/serp/serpapi';
 import UrlModel, { CampaignUrlModel } from './../modules/campaign/Url.model';
-import { SearchType, UrlStatus } from './../modules/campaign/campaign.interfaces';
-import { extractCompanySummaryFromTitleAndBody } from './../modules/langchain/summary';
-import { extractTitleAndText } from './../modules/utils/url';
-import scrape from './scraper';
-import { cleanupAllAxiosInstances } from './../modules/limitedAxios';
-import { getCacheDomainSearchedEmails, parseEmailsFromSnovIODomainSearch } from './../app/email-search/snovio';
+import { ICampaignDoc, SearchType, UrlStatus } from './../modules/campaign/campaign.interfaces';
+import { IntegrationTypes } from './../modules/integrations/integration.interfaces';
 import IntegrationModel from './../modules/integrations/integration.model';
 import { writeSubjectAndBodyOfEmail } from './../modules/langchain/email';
+import { extractCompanySummaryFromTitleAndBody } from './../modules/langchain/summary';
+import { cleanupAllAxiosInstances } from './../modules/limitedAxios';
 import { logger } from './../modules/logger';
-import { addLeadToCampaign } from './../app/outreach/lemlist';
+import { extractTitleAndText } from './../modules/utils/url';
+import scrape from './scraper';
+import { extractEmployeesInformationFromSerp } from './../modules/langchain/serp';
 
 
 // Create the Bull queue
@@ -25,7 +28,11 @@ scrapeQueue.on('failed', (job, err) => {
 
 // Process jobs in the queue
 scrapeQueue.process(async (job) => {
-    const { url, campaign, searchType, user, emailSearchService, audienceFilters, motive, includeDetails, outreachAgent, camapignId } = job.data;
+    const { url, campaignJson, user } = job.data;
+    const {
+        searchType, emailSearchService, audienceFilters, objective, includeDetails, outreachAgent, id: campaign
+    } = campaignJson as ICampaignDoc
+
 
     // Scrape the URL using Puppeteer
     let title = "";
@@ -71,12 +78,31 @@ scrapeQueue.process(async (job) => {
     }
 
     if (searchType === SearchType.DOMAINS) {
-        const emailSearchIntegratoin = await IntegrationModel.findOne({ user, type: emailSearchService });
-        if (!emailSearchIntegratoin) {
+        const emailSearchIntegration = await IntegrationModel.findOne({ user, type: emailSearchService });
+        if (!emailSearchIntegration) {
+            await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                error: true,
+                errorReason: "No email search integration found. Please add one of email integration service."
+            });
             return;
         }
-        const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegratoin.id, emailSearchIntegratoin.accessToken, url, audienceFilters.positions);
+        const positions: string[] = [];
+        if (audienceFilters.position) {
+            positions.push(audienceFilters.position);
+        }
+
+        const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
+
+        const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegration.id, accessToken, url, positions);
         const contactEmails = parseEmailsFromSnovIODomainSearch(domainSearchWithResults);
+        if (!contactEmails?.length) {
+            await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                error: true,
+                errorReason: "0 emails found for given position"
+            });
+            return;
+        }
+
         for (const email of contactEmails) {
             const response = await writeSubjectAndBodyOfEmail({
                 name: email["firstName"],
@@ -84,17 +110,22 @@ scrapeQueue.process(async (job) => {
                 businessName: email["companyName"],
                 businessInfo: JSON.stringify(businessInfo),
                 businessDomain: url,
-                motive,
+                motive: objective,
                 includeDetails
             });
+
             try {
                 const { subject, body } = JSON.parse(response);
+                await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                    emailSubject: subject,
+                    emailBody: body
+                });
                 const outreachIntegration = await IntegrationModel.findOne({ user, outreachAgent });
                 if (!outreachIntegration) {
                     return;
                 }
                 const { accessToken } = outreachIntegration;
-                await addLeadToCampaign(accessToken, camapignId, email["email"], {
+                await addLeadToCampaignUsingLemlist(accessToken, campaign, email["email"], {
                     rightOCompanyName: email["company"],
                     rightODesignation: email["position"],
                     rightOFirstName: email["firstName"],
@@ -102,6 +133,12 @@ scrapeQueue.process(async (job) => {
                     rightOEmailBody: body,
                     rightOEmailSubject: subject,
                 })
+
+                await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                    emailSubject: subject,
+                    emailBody: body,
+                    isCompleted: true
+                });
             }
             catch (err: any) {
                 logger.error(`parsing or adding lead to campaign error: ${err?.message}`)
@@ -110,31 +147,107 @@ scrapeQueue.process(async (job) => {
         // pass 
     }
     else if (searchType === SearchType.DOMAINS_WITH_SERP) {
-        // pass 
+        const serpApiIntegration = await IntegrationModel.findOne({ user, type: IntegrationTypes.SERPAPI });
+        if (!serpApiIntegration) {
+            return;
+        }
+        const [query, response] = await cacheSerpApiResponseWithQuery({
+            integration: serpApiIntegration.id,
+            domain: url,
+            accessToken: serpApiIntegration.accessToken,
+            position: audienceFilters.position,
+            department: "Executive"
+        });
+        const results = parseSerpResponse(response);
+        const employeesInformationString = await extractEmployeesInformationFromSerp(query, results);
+        try {
+            const employessInformationJson: { firstName: string, lastName: string }[] = JSON.parse(employeesInformationString);
+            for (const employee of employessInformationJson) {
+                // we now need to use email finder
+                const emailSearchIntegration = await IntegrationModel.findOne({ user, type: emailSearchService });
+                if (!emailSearchIntegration) {
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                        error: true,
+                        errorReason: "No email search integration found. Please add one of email integration service."
+                    });
+                    return;
+                }
+
+                const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
+
+                const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, employee.firstName, employee.lastName, url);
+
+                const parsedEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
+
+                if (!parsedEmails?.length) {
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                        error: true,
+                        errorReason: "0 emails found for given position"
+                    });
+                    return;
+                }
+
+                for (const email of parsedEmails) {
+                    const response = await writeSubjectAndBodyOfEmail({
+                        name: email["firstName"],
+                        designation: email["position"],
+                        businessName: "",
+                        businessInfo: JSON.stringify(businessInfo),
+                        businessDomain: url,
+                        motive: objective,
+                        includeDetails
+                    });
+
+                    try {
+                        const { subject, body } = JSON.parse(response);
+                        await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                            emailSubject: subject,
+                            emailBody: body
+                        });
+                        const outreachIntegration = await IntegrationModel.findOne({ user, outreachAgent });
+                        if (!outreachIntegration) {
+                            return;
+                        }
+                        const { accessToken } = outreachIntegration;
+                        await addLeadToCampaignUsingLemlist(accessToken, campaign, email["email"], {
+                            rightOCompanyName: email["company"],
+                            rightODesignation: email["position"],
+                            rightOFirstName: email["firstName"],
+                            rightOLastName: email["lastName"],
+                            rightOEmailBody: body,
+                            rightOEmailSubject: subject,
+                        })
+
+                        await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                            emailSubject: subject,
+                            emailBody: body,
+                            isCompleted: true
+                        });
+                    }
+                    catch (err: any) {
+                        logger.error(`parsing or adding lead to campaign error: ${err?.message}`)
+                    }
+                    break;
+                }
+
+
+            }
+        }
+        catch {
+            logger.error(`Parsing error for employees`);
+
+            await CampaignUrlModel.findOneAndUpdate({ url, campaign }, {
+                error: true,
+                errorReason: "No email search integration found. Please add one of email integration service."
+            });
+            return;
+
+        }
+
     }
 
 });
 
-const removePlaceholders = (text: string) => {
-    return text.replace(/\[[^\]]*\]/g, '');
-}
 
-(async () => {
-    let data = await writeSubjectAndBodyOfEmail({
-        name: "Ivan",
-        designation: "CTO",
-        businessName: "Chanchlani Company",
-        businessInfo: JSON.stringify({
-            phoneNumber: +9779860108870,
-            summary: `
-            Snov.io is a sales toolbox and CRM platform that offers a collection of sales tools designed to help businesses scale and engage with leads more effectively. With over 130,000 trusted companies in 180+ countries, Snov.io's solutions include email finder, drip campaigns, email verifier, email warm-up, sales CRM, email tracker, technology checker, and Chrome extensions. The platform also offers integrations with over 5,000 tools, localized support in four languages, and award-winning customer care. Snov.io has received high ratings and positive reviews from G2, Capterra, Trustpilot, and Chrome, making it a reliable and efficient solution for businesses to grow their revenue.`
-        }),
-        businessDomain: "https://snov.io",
-        motive: "Sell my product",
-        includeDetails: "RightO is personalized email sender, increases conversion rate, can even make use of serp api, cheap. Offer available at https://righto.com?offer=XyzKl"
-    });
-    data = removePlaceholders(data);
-    console.log(data);
-});
 
 export default scrapeQueue;
