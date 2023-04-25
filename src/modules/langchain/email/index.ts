@@ -11,15 +11,30 @@ import { humanPromptTemplateString, systemPromptTemplateString } from "./templat
 
 const chat = new ChatOpenAI({ temperature: 0.7 });
 
-export const writeSubjectAndBodyOfEmail = async (emailMotive: string, summary: string, name: string) => {
+interface IEmailCampaignArgs {
+    name: string,
+    designation: string,
+    businessName: string,
+    businessInfo: string,
+    businessDomain: string,
+    motive: string,
+    includeDetails: string
+}
+
+export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, businessName, includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])
     const chatMessages = await chatPromptTemplate.formatPromptValue({
-        emailMotive,
-        summary,
-        name
+        name,
+        designation,
+        businessDomain,
+        businessName,
+        businessInfo,
+        motive,
+        includeDetails
     });
+
 
     const response = await chat.call(chatMessages.toChatMessages());
     return response.text;

@@ -2,7 +2,8 @@ import { logger } from './../../modules/logger';
 import axios from 'axios';
 
 interface LeadData {
-    rightOEmail: string,
+    rightOEmailBody: string,
+    rightOEmailSubject: string,
     rightOFirstName: string,
     rightOLastName: string,
     rightODesignation: string,
@@ -10,7 +11,7 @@ interface LeadData {
 }
 
 
-export const addLeadToCampaign = async (accessToken: string, campaignId: string, email: string, data: LeadData,): Promise<any> => {
+export const addLeadToCampaign = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
     try {
         const response = await axios.post(
             `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}`,

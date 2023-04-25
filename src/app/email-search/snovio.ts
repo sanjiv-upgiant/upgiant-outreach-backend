@@ -88,7 +88,7 @@ const getDomainSearchedEmails = async (accessToken: string, domain: string, posi
     }
 };
 
-export const cacheDomainSearchedEmails = async (integration: string, accessToken: string, domain: string, positions: string[] = [], limit = "5", genericOrPersonal = "personal") => {
+export const getCacheDomainSearchedEmails = async (integration: string, accessToken: string, domain: string, positions: string[] = [], limit = "1", genericOrPersonal = "personal") => {
     const key = domain + '|' + positions.join(',') + '|' + limit + '|' + genericOrPersonal;
 
     const cachedResult = await IntegrationOutputModel.findOne({ key });
@@ -97,13 +97,13 @@ export const cacheDomainSearchedEmails = async (integration: string, accessToken
     }
 
     const result = await getDomainSearchedEmails(accessToken, domain, positions, limit, genericOrPersonal);
-
-    await IntegrationOutputModel.findOneAndUpdate(
-        { key },
-        { key, integration, result },
-        { upsert: true }
-    );
-
+    if (result) {
+        await IntegrationOutputModel.findOneAndUpdate(
+            { key },
+            { key, integration, result },
+            { upsert: true }
+        );
+    }
     return result;
 };
 
@@ -125,4 +125,9 @@ export const cacheEmailsFinder = async (integration: string, accessToken: string
 
     return result;
 };
+
+export const parseEmailsFromSnovIODomainSearch = (data: any = {}) => {
+    const emails = data["emails"] || [];
+    return emails;
+}
 

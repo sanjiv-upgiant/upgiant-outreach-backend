@@ -12,6 +12,18 @@ export enum SearchType {
     DOMAINS_WITH_SERP = "DOMAINS_WITH_GOOGLE_SEARCh",
 }
 
+export enum DomainEmailSearchTypes {
+    SNOVIO = "SNOVIO",
+    HUNTER = "HUNTER",
+    APOLLO = "APOLLO",
+}
+
+export enum OutreachAgent {
+    LEMLIST = "LEMLIST"
+}
+
+
+
 export interface ICampaign {
     user: string;
     name: string;
@@ -21,10 +33,14 @@ export interface ICampaign {
     objective: string;
     audienceFilters: {
         seniority: string,
-        title: string,
+        positions: string[],
         department: string,
     },
-    searchType: SearchType
+    searchType: SearchType,
+    emailSearchService: DomainEmailSearchTypes,
+    outreachAgent: OutreachAgent,
+    includeDetails: string,
+    campaignId: string,
 }
 
 export enum UrlStatus {

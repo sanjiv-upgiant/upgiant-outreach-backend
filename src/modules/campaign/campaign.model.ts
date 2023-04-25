@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import toJSON from '../toJSON/toJSON';
 import paginate from '../paginate/paginate';
-import { CampaignStatus, ICampaignDoc, ICampaignModel, SearchType } from './campaign.interfaces';
+import { CampaignStatus, ICampaignDoc, ICampaignModel, SearchType, DomainEmailSearchTypes, OutreachAgent } from './campaign.interfaces';
 
 const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
     {
@@ -36,6 +36,20 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             enum: SearchType,
             default: SearchType.DOMAINS
         },
+        emailSearchService: {
+            type: String,
+            enum: DomainEmailSearchTypes,
+        },
+        outreachAgent: {
+            type: String,
+            enum: OutreachAgent,
+        },
+        includeDetails: {
+            type: String
+        },
+        campaignId: {
+            type: String
+        }
     },
     {
         timestamps: true,

@@ -19,9 +19,15 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     const { urls = [] } = req.body;
     for (const url of urls) {
         scrapeQueue.add({
+            user,
             url,
             campaign: campaign.id,
-            searchType: campaign.searchType
+            searchType: campaign.searchType,
+            emailSearchService: campaign.emailSearchService,
+            audienceFilters: campaign.audienceFilters,
+            includeDetails: campaign.includeDetails,
+            outreachAgent: campaign.outreachAgent,
+            campaignId: campaign.campaignId
         }, jobOptions)
     }
     res.status(httpStatus.CREATED).send(campaign);
