@@ -41,7 +41,6 @@ export interface ICampaign {
     serpApiId: string,
     outreachAgentId: string,
     includeDetails: string,
-    campaignId: string,
 }
 
 export enum UrlStatus {
@@ -79,7 +78,8 @@ export interface ICampaignUrl {
     emailExtracted: boolean,
     isCompleted: boolean,
     error: boolean,
-    errorReason: string
+    errorReason: string,
+    contactEmails: any
 }
 
 export interface ICampaignUrlDoc extends ICampaignUrl, Document {

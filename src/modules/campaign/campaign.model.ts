@@ -47,9 +47,6 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         },
         includeDetails: {
             type: String
-        },
-        campaignId: {
-            type: String
         }
     },
     {

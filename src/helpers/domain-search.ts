@@ -46,6 +46,12 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         return;
     }
 
+    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+        emailExtracted: true,
+        contactEmails
+    });
+
+
     for (const contactEmail of contactEmails) {
         const response = await writeSubjectAndBodyOfEmail({
             name: contactEmail["firstName"],

@@ -363,6 +363,30 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@bull-board/api@5.1.1", "@bull-board/api@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@bull-board/api/-/api-5.1.1.tgz#1a7e966afc65e2ca453b63f521aad00bdf78cf2e"
+  integrity sha512-q3vr/gXGY2ubLqm9rw0V1qP44Bj24x71u1t+zEs7CpqiOJI9Rjf8OjrAI8FlzF6iNBcmI2mCAGDl4U3Kg6PjoQ==
+  dependencies:
+    redis-info "^3.0.8"
+
+"@bull-board/express@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@bull-board/express/-/express-5.1.1.tgz#0832ff80ab1527b613c2dd0e9cd9e56c9ad91ab5"
+  integrity sha512-iQ8n9uN7nxsizZ/1hZi5u3CEj7wtEZoDo0/MkRNheTsdro7f/MuKHIfiohZpouxSD92mNvclAqEbzGetBYpe1A==
+  dependencies:
+    "@bull-board/api" "5.1.1"
+    "@bull-board/ui" "5.1.1"
+    ejs "3.1.7"
+    express "4.17.3"
+
+"@bull-board/ui@5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@bull-board/ui/-/ui-5.1.1.tgz#4c5af9435510bc08ad4a873a43688d06caa94fed"
+  integrity sha512-+N/m29ZuKLIDFIC743sGE0+vtM0rNMPyidV3m3gZ5fItkrafKrZe2e83sluE7lcrM0iWj4mW4aEF20DYO2J85w==
+  dependencies:
+    "@bull-board/api" "5.1.1"
+
 "@commitlint/cli@^16.2.3":
   version "16.2.3"
   resolved "https://registry.npmjs.org/@commitlint/cli/-/cli-16.2.3.tgz"
@@ -3243,6 +3267,13 @@ ejs@3.1.6:
   dependencies:
     jake "^10.6.1"
 
+ejs@3.1.7:
+  version "3.1.7"
+  resolved "https://registry.yarnpkg.com/ejs/-/ejs-3.1.7.tgz#c544d9c7f715783dd92f0bddcf73a59e6962d006"
+  integrity sha512-BIar7R6abbUxDA3bfXrO4DSgwo8I+fB5/1zgujl3HLLjwd6+9iOnrT+t3grn2qbk9vOgBubXOFwX2m9axoFaGw==
+  dependencies:
+    jake "^10.8.5"
+
 electron-to-chromium@^1.3.896:
   version "1.4.16"
   resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.4.16.tgz"
@@ -3702,7 +3733,7 @@ express@4.17.1:
     utils-merge "1.0.1"
     vary "~1.1.2"
 
-express@^4.17.1:
+express@4.17.3, express@^4.17.1:
   version "4.17.3"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.3.tgz#f6c7302194a4fb54271b73a1fe7a06478c8f85a1"
   integrity sha512-yuSQpz5I+Ch7gFrPCk4/c+dIBKlQUxtgwqzph132bsT6qhuzss6I8cLJQz7B3rFblzd6wtcI0ZbGltH/C4LjUg==
@@ -4968,7 +4999,7 @@ istanbul-reports@^3.0.2:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
-jake@^10.6.1:
+jake@^10.6.1, jake@^10.8.5:
   version "10.8.5"
   resolved "https://registry.yarnpkg.com/jake/-/jake-10.8.5.tgz#f2183d2c59382cb274226034543b9c03b8164c46"
   integrity sha512-sVpxYeuAhWt0OTWITwT98oyV0GsXyMlXCF+3L1SuafBVUIr/uILGRB+NqwkzhgXKvoJpDIpQvqkUALgdmQsQxw==

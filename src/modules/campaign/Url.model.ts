@@ -37,6 +37,9 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
     errorReason: {
         type: String,
     },
+    contactEmails: {
+        type: mongoose.Schema.Types.Mixed
+    }
 })
 
 const urlSchema = new mongoose.Schema<IUrlDoc, IUrlModel>(

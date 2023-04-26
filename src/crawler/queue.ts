@@ -9,6 +9,7 @@ import { searchWithDomain } from './../helpers/domain-search';
 import { searchWithSerpAndDomain } from './../helpers/domain-with-serp-search';
 
 
+
 // Create the Bull queue
 const scrapeQueue = new Queue('scrape', { redis: { port: 6379, host: '127.0.0.1' } });
 scrapeQueue.on('completed', (job) => {
@@ -20,9 +21,8 @@ scrapeQueue.on('failed', (job, err) => {
     console.log(`Job ${job.id} failed with error ${err}`);
 });
 
-// Process jobs in the queue
 scrapeQueue.process(async (job) => {
-    const { url, campaignJson, user } = job.data;
+    const { url, campaignJson } = job.data;
     const {
         id,
         searchType
@@ -58,7 +58,6 @@ scrapeQueue.process(async (job) => {
             status: UrlStatus.QUEUED
         });
     }
-
 
     if (status !== UrlStatus.SUMMARY_EXTRACTED) {
         const res = await extractCompanySummaryFromTitleAndBody(title, body)

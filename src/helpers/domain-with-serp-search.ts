@@ -60,13 +60,18 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 }
             }
 
+            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                emailExtracted: true,
+                contactEmails
+            });
+
 
             for (const contactEmail of contactEmails) {
                 const response = await writeSubjectAndBodyOfEmail({
                     name: contactEmail["firstName"],
+                    businessDomain: url,
                     designation: employee["position"],
                     businessInfo: JSON.stringify(info),
-                    businessDomain: url,
                     motive: objective,
                     includeDetails,
                 });
