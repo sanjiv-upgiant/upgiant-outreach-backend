@@ -11,7 +11,7 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
         required: true,
         trim: true
     },
-    campaign: {
+    campaignId: {
         type: String,
         required: true,
         trim: true

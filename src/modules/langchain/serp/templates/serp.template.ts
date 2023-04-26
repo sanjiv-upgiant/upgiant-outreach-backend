@@ -4,14 +4,14 @@ export const humanPromptTemplateString = `Below is the Google search query and i
     {{
         firstName: first name of that person,
         lastName: last name of that person,
-        designation: position/desination of that person
+        position: position/desination of that person
     }}
 
     Please be wary that you may have multiple output. So, return the array of above format even if you find just one result. 
     Example output.
     [
-        {{"firstName":"Peter","lastName": "heinzel","designation": "CEO"}},
-        {{"firstName":"Chris","lastName":"Jenkins", "designation": "Manager"}}
+        {{"firstName":"Peter","lastName": "heinzel","position": "CEO"}},
+        {{"firstName":"Chris","lastName":"Jenkins", "position": "Manager"}}
     ]
 
     Query: "{query}"

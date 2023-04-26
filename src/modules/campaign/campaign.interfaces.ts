@@ -37,8 +37,9 @@ export interface ICampaign {
         department: string,
     },
     searchType: SearchType,
-    emailSearchService: DomainEmailSearchTypes,
-    outreachAgent: OutreachAgent,
+    emailSearchServiceId: string,
+    serpApiId: string,
+    outreachAgentId: string,
     includeDetails: string,
     campaignId: string,
 }
@@ -72,7 +73,7 @@ export interface IUrlModel extends Model<IUrlDoc> {
 }
 export interface ICampaignUrl {
     url: string,
-    campaign: string,
+    campaignId: string,
     emailSubject: string,
     emailBody: string,
     emailExtracted: boolean,

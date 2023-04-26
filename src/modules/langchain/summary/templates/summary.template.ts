@@ -5,6 +5,7 @@ export const humanPromptTemplateString = `You create summaries of businesses bas
     a. summary: summary of the website. Should contain a short summary of what the website does and is about.
     b. category: Category of the website. Provide me exact category.
     c. phoneNumber: Phone number if available. Else empty string
+    d. name: Name of the company
 
     Below is the website information.
     Title: {title} \nBody: {body}`

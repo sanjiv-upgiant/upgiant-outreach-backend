@@ -13,15 +13,15 @@ const chat = new ChatOpenAI({ temperature: 0.7 });
 
 interface IEmailCampaignArgs {
     name: string,
-    designation: string,
-    businessName: string,
-    businessInfo: string,
     businessDomain: string,
-    motive: string,
-    includeDetails: string
+    motive?: string,
+    designation?: string,
+    businessInfo?: string,
+    businessName?: string,
+    includeDetails?: string
 }
 
-export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, businessName, includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])
