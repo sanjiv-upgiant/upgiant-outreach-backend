@@ -36,7 +36,12 @@ const getQueryAndSerpApiResponse = async (params: SerpResponse) => {
 }
 
 export const cacheSerpApiResponseWithQuery = async (params: SerpResponse) => {
-    const key = `${params.domain} | ${params.department} | ${params.position} | ${params.title}`;
+    const domain = params.domain ? `${params.domain} | ` : '';
+    const department = params.department ? `${params.department} | ` : '';
+    const position = params.position ? `${params.position} | ` : '';
+    const title = params.title ? params.title : '';
+
+    const key = `${domain}${department}${position}${title}`;
 
     const cachedResult = await IntegrationOutputModel.findOne({ key });
     if (cachedResult && (Date.now() - cachedResult.updatedAt.getTime()) / 1000 < CACHE_TTL) {

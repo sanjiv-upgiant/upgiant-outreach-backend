@@ -22,7 +22,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
         domain: url,
         accessToken: serpApiIntegration.accessToken,
         position: audienceFilters.position,
-        department: "Executive"
+        department: audienceFilters.department
     });
     const results = parseSerpResponse(response);
     const employeesInformationString = await extractEmployeesInformationFromSerp(query, results);
@@ -43,7 +43,11 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 firstName: string,
                 lastName: string,
                 emails: { email: string, emailStatus: string }[],
-            }[] = [];
+            } = {
+                firstName: "",
+                lastName: "",
+                emails: []
+            };
 
             if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
                 const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
@@ -51,13 +55,14 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, employee.firstName, employee.lastName, url);
 
                 contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
-                if (!contactEmails?.length) {
-                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                        error: true,
-                        errorReason: "0 emails found for given position"
-                    });
-                    return;
-                }
+            }
+
+            if (!contactEmails?.emails?.length) {
+                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                    error: true,
+                    errorReason: "0 emails found for given position"
+                });
+                return;
             }
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
@@ -65,10 +70,9 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 contactEmails
             });
 
-
-            for (const contactEmail of contactEmails) {
+            for (const contactEmail of contactEmails.emails) {
                 const response = await writeSubjectAndBodyOfEmail({
-                    name: contactEmail["firstName"],
+                    name: contactEmails["firstName"],
                     businessDomain: url,
                     designation: employee["position"],
                     businessInfo: JSON.stringify(info),
@@ -76,44 +80,35 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                     includeDetails,
                 });
 
-                try {
-                    const { subject, body } = JSON.parse(response);
-                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                        emailSubject: subject,
-                        emailBody: body
-                    });
-                    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-                    if (!outreachIntegration) {
-                        return;
-                    }
-                    const { accessToken } = outreachIntegration;
-                    const firstEmail = contactEmail["emails"]?.[0]?.email || "";
-                    if (!firstEmail) {
-                        return;
-                    }
-                    await addLeadToCampaignUsingLemlist(accessToken, campaignId, firstEmail, {
-                        rightODesignation: employee["position"],
-                        rightOCompanyName: info["name"] || "",
-                        rightOFirstName: contactEmail["firstName"],
-                        rightOLastName: contactEmail["lastName"],
-                        rightOEmailBody: body,
-                        rightOEmailSubject: subject,
-                    })
+                const { subject, body } = JSON.parse(response);
+                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                    emailSubject: subject,
+                    emailBody: body
+                });
+                const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+                if (!outreachIntegration) {
+                    return;
+                }
+                const { accessToken } = outreachIntegration;
+                await addLeadToCampaignUsingLemlist(accessToken, campaignId, contactEmail.email, {
+                    rightODesignation: employee["position"],
+                    rightOCompanyName: info["name"] || "",
+                    rightOFirstName: contactEmails.firstName,
+                    rightOLastName: contactEmails.lastName,
+                    rightOEmailBody: body,
+                    rightOEmailSubject: subject,
+                })
 
-                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                        emailSubject: subject,
-                        emailBody: body,
-                        isCompleted: true
-                    });
-                }
-                catch (err: any) {
-                    logger.error(`parsing or adding lead to campaign error: ${err?.message}`)
-                }
+                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                    addedToOutreachAgent: true,
+                    emailSubject: subject,
+                    emailBody: body,
+                    isCompleted: true
+                });
                 break;
             }
-
-
         }
+
     }
     catch {
         logger.error(`Parsing error for employees`);

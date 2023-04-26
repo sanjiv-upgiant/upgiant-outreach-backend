@@ -9,7 +9,7 @@ export enum CampaignStatus {
 export enum SearchType {
     CONTACTS = "CONTACTS",
     DOMAINS = "DOMAINS",
-    DOMAINS_WITH_SERP = "DOMAINS_WITH_GOOGLE_SEARCh",
+    DOMAINS_WITH_SERP = "DOMAINS_WITH_GOOGLE_SEARCH",
 }
 
 export enum DomainEmailSearchTypes {
@@ -78,6 +78,7 @@ export interface ICampaignUrl {
     emailExtracted: boolean,
     isCompleted: boolean,
     error: boolean,
+    addedToOutreachAgent: boolean,
     errorReason: string,
     contactEmails: any
 }

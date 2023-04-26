@@ -30,6 +30,10 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
         type: Boolean,
         default: false
     },
+    addedToOutreachAgent: {
+        type: Boolean,
+        default: false
+    },
     error: {
         type: Boolean,
         default: false

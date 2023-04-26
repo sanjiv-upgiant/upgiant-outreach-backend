@@ -132,7 +132,7 @@ export const parseEmailsFromSnovIODomainSearch = (data: any = {}) => {
 }
 
 export const parseEmailsFromSnovIOEmailSearch = (data: any = {}) => {
-    const emails = data["data"] || [];
+    const emails = data["data"];
     return emails;
 }
 
