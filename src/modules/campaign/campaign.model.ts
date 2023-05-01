@@ -38,15 +38,21 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         },
         emailSearchServiceId: {
             type: String,
+            required: true
         },
         outreachAgentId: {
             type: String,
+            required: true
         },
         serpApiId: {
             type: String,
         },
         includeDetails: {
             type: String
+        },
+        openAiIntegrationId: {
+            type: String,
+            required: true
         }
     },
     {

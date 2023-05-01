@@ -9,7 +9,6 @@ import {
 import { humanPromptTemplateString, systemPromptTemplateString } from "./templates/email.template";
 
 
-const chat = new ChatOpenAI({ temperature: 0.7 });
 
 interface IEmailCampaignArgs {
     name: string,
@@ -18,10 +17,12 @@ interface IEmailCampaignArgs {
     designation?: string,
     businessInfo?: string,
     businessName?: string,
-    includeDetails?: string
+    includeDetails?: string,
+    openAIApiKey: string,
 }
 
-export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, openAIApiKey, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
+    const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])

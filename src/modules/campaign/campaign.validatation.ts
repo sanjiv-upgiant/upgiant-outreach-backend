@@ -8,9 +8,9 @@ export const createCampaignValidation = {
         modelName: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
-            position: Joi.string().required(),
-            seniority: Joi.string().optional(),
-            department: Joi.string().optional(),
+            position: Joi.string().optional().allow(""),
+            seniority: Joi.string().optional().allow(""),
+            department: Joi.string().optional().allow(""),
         }).required(),
         searchType: Joi.string().valid(
             SearchType.CONTACTS,
@@ -18,12 +18,13 @@ export const createCampaignValidation = {
             SearchType.DOMAINS_WITH_SERP
         ).required(),
         emailSearchServiceId: Joi.string().required(),
+        openAiIntegrationId: Joi.string().required(),
+        outreachAgentId: Joi.string().required(),
         serpApiId: Joi.when('searchType', {
             is: SearchType.DOMAINS_WITH_SERP,
             then: Joi.string().required(),
             otherwise: Joi.string().allow(null),
         }),
-        outreachAgentId: Joi.string().required(),
-        includeDetails: Joi.string().required(),
+        includeDetails: Joi.string().optional(),
     }),
 };

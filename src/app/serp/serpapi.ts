@@ -1,7 +1,6 @@
-import { extractEmployeesInformationFromSerp } from "./../../modules/langchain/serp";
-import { CACHE_TTL } from "./../../constants";
-import IntegrationModel, { IntegrationOutputModel } from "./../../modules/integrations/integration.model";
 import { BaseResponse, GoogleParameters, getJson } from "serpapi";
+import { CACHE_TTL } from "./../../constants";
+import { IntegrationOutputModel } from "./../../modules/integrations/integration.model";
 
 interface SerpResponse {
     integration: string,
@@ -87,30 +86,3 @@ export const parseSerpResponse = (serpResponse: BaseResponse<GoogleParameters>) 
     }
     return response.trim();
 }
-
-
-(async () => {
-    const user = "644125a75daaa50147f25a88";
-    const integration = await IntegrationModel.findOne({ user, type: "SERPAPI" });
-    if (integration) {
-        const [query, response] = await cacheSerpApiResponseWithQuery({
-            integration: integration.id,
-            domain: "https://missionworkshop.com",
-            accessToken: integration.accessToken,
-            position: "Manager",
-            department: "Executive"
-        });
-        const results = parseSerpResponse(response);
-        const employeesInformation = await extractEmployeesInformationFromSerp(query, results)
-        console.log(employeesInformation, 'haha');
-    }
-})
-
-//  [
-// [1]     {"firstName":"Josh","lastName":"Margolis","designation":"Operations Executive"},
-// [1]     {"firstName":"Pamela","lastName":"Comstock","designation":"Director, Production Apparel"},
-// [1]     {"firstName":"Daria","lastName":"Walls Torres","designation":"Managing Partner"},
-// [1]     {"firstName":"Darius","lastName":"Pearson","designation":"Senior Brand Manager"},
-// [1]     {"firstName":"Anders","lastName":"Johnson","designation":"Customer Experience Manager"},
-// [1]     {"firstName":"Lyndi","lastName":"Priest","designation":"Director, Design"}
-// [1] ]

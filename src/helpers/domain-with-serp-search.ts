@@ -11,10 +11,19 @@ import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, serpApiId, emailSearchServiceId, outreachAgentId } = campaign;
+    const { id: campaignId, audienceFilters, objective, includeDetails, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     if (!serpApiIntegration) {
+        return;
+    }
+    const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
+    if (!serpApiIntegration || !openAIIntegration) {
+
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+            error: true,
+            errorReason: "No openai integration/SERP found. Please add required access tokens"
+        });
         return;
     }
     const [query, response] = await cacheSerpApiResponseWithQuery({
@@ -25,9 +34,10 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
         department: audienceFilters.department
     });
     const results = parseSerpResponse(response);
-    const employeesInformationString = await extractEmployeesInformationFromSerp(query, results);
+    const employeesInformationString = await extractEmployeesInformationFromSerp(openAIIntegration.accessToken, query, results);
     try {
         const employessInformationJson: { firstName: string, lastName: string, position: string }[] = JSON.parse(employeesInformationString) || [];
+
         for (const employee of employessInformationJson) {
             // we now need to use email finder
             const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
@@ -62,51 +72,54 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                     error: true,
                     errorReason: "0 emails found for given position"
                 });
-                return;
             }
-
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                emailExtracted: true,
-                contactEmails
-            });
-
-            for (const contactEmail of contactEmails.emails) {
-                const response = await writeSubjectAndBodyOfEmail({
-                    name: contactEmails["firstName"],
-                    businessDomain: url,
-                    designation: employee["position"],
-                    businessInfo: JSON.stringify(info),
-                    motive: objective,
-                    includeDetails,
-                });
-
-                const { subject, body } = JSON.parse(response);
+            else {
                 await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                    emailSubject: subject,
-                    emailBody: body
+                    emailExtracted: true,
+                    contactEmails
                 });
-                const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-                if (!outreachIntegration) {
-                    return;
+
+                for (const contactEmail of contactEmails.emails) {
+                    const response = await writeSubjectAndBodyOfEmail({
+                        name: contactEmails["firstName"],
+                        businessDomain: url,
+                        designation: employee["position"],
+                        businessInfo: JSON.stringify(info),
+                        motive: objective,
+                        includeDetails,
+                        openAIApiKey: openAIIntegration.accessToken
+                    });
+
+                    const { subject, body } = JSON.parse(response);
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                        emailSubject: subject,
+                        emailBody: body
+                    });
+                    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+                    if (!outreachIntegration) {
+                        return;
+                    }
+                    const { accessToken } = outreachIntegration;
+                    await addLeadToCampaignUsingLemlist(accessToken, campaignId, contactEmail.email, {
+                        rightODesignation: employee["position"],
+                        rightOCompanyName: info["name"] || "",
+                        rightOFirstName: contactEmails.firstName,
+                        rightOLastName: contactEmails.lastName,
+                        rightOEmailBody: body,
+                        rightOEmailSubject: subject,
+                    })
+
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                        addedToOutreachAgent: true,
+                        emailSubject: subject,
+                        emailBody: body,
+                        isCompleted: true
+                    });
+                    break;
                 }
-                const { accessToken } = outreachIntegration;
-                await addLeadToCampaignUsingLemlist(accessToken, campaignId, contactEmail.email, {
-                    rightODesignation: employee["position"],
-                    rightOCompanyName: info["name"] || "",
-                    rightOFirstName: contactEmails.firstName,
-                    rightOLastName: contactEmails.lastName,
-                    rightOEmailBody: body,
-                    rightOEmailSubject: subject,
-                })
-
-                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                    addedToOutreachAgent: true,
-                    emailSubject: subject,
-                    emailBody: body,
-                    isCompleted: true
-                });
                 break;
             }
+
         }
 
     }

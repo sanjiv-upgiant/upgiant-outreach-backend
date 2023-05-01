@@ -7,15 +7,15 @@ import {
 import { humanPromptTemplateString, systemPromptTemplateString } from "./templates/summary.template";
 
 
-const chat = new ChatOpenAI({ temperature: 0.7 });
 
-export const extractCompanySummaryFromTitleAndBody = async (title: string, body: string) => {
+export const extractCompanySummaryFromTitleAndBody = async (title: string, body: string, openAIApiKey: string) => {
+    const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])
     const chatMessages = await chatPromptTemplate.formatPromptValue({
         title,
-        body
+        body,
     });
 
     const response = await chat.call(chatMessages.toChatMessages());

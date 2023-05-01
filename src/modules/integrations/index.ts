@@ -1,6 +1,6 @@
 
-import { addIntegrationController } from "./integration.controller";
+import { addIntegrationController, getIntegrationsController } from "./integration.controller";
 
 export {
-    addIntegrationController
+    addIntegrationController, getIntegrationsController
 }

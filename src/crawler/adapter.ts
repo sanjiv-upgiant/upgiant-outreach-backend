@@ -2,14 +2,15 @@
 import { ExpressAdapter } from '@bull-board/express';
 import { createBullBoard } from '@bull-board/api'
 import { BullAdapter } from '@bull-board/api/bullAdapter'
-import scrapeQueue from './queue';
+import { bullQueues } from './queue';
 
 export const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/v1/admin/queues');
 
+const bullQueuesAdapters = bullQueues.map((queue) => new BullAdapter(queue, { readOnlyMode: true }))
+
 createBullBoard({
-    queues: [
-        new BullAdapter(scrapeQueue, { readOnlyMode: true }), // only this queue will be in read only mode
-    ],
+    queues: bullQueuesAdapters,
     serverAdapter
 })
+

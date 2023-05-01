@@ -18,7 +18,7 @@ const defaultIRoute: IRoute[] = [
     route: authRoute,
   },
   {
-    path: '/campaign',
+    path: '/campaigns',
     route: campaignRoute,
   },
   {

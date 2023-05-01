@@ -41,6 +41,7 @@ export interface ICampaign {
     serpApiId: string,
     outreachAgentId: string,
     includeDetails: string,
+    openAiIntegrationId: string,
 }
 
 export enum UrlStatus {

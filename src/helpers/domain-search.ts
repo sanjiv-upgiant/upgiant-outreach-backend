@@ -8,9 +8,17 @@ import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { logger } from "./../modules/logger";
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, audienceFilters, objective, includeDetails, outreachAgentId } = campaign;
+    const { id: campaignId, emailSearchServiceId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
+    const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
+    if (!openAIIntegration) {
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+            error: true,
+            errorReason: "No openai integration found. Please add OpenAI access token"
+        });
+        return;
+    }
     if (!emailSearchIntegration) {
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
             error: true,
@@ -60,7 +68,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             businessInfo: JSON.stringify(info),
             businessDomain: url,
             motive: objective,
-            includeDetails
+            includeDetails,
+            openAIApiKey: openAIIntegration.accessToken
         });
 
         try {
