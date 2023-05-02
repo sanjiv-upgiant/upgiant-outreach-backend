@@ -12,6 +12,10 @@ export const getUserCampaigns = async (user: string) => {
     return CampaignModel.find({ user }).sort({ "_id": -1 });
 }
 
+export const deleteUserCampaign = async (user: string, id: string) => {
+    return CampaignModel.deleteOne({ user, _id: id })
+}
+
 
 export const getUserSingleCampaign = async (user: string, _id: string) => {
     return CampaignModel.findOne({ user, _id });

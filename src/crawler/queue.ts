@@ -68,14 +68,18 @@ const getCampaignQueue = (queueId: string) => {
                 url,
                 title: urlTitle,
                 body: urlBody,
-                status: UrlStatus.QUEUED
+                status: UrlStatus.SUMMARY_EXTRACTED
             }, {
                 upsert: true,
                 new: true
             });
         }
 
-        if (!urlFromDatabase) {
+        if (!urlFromDatabase || !title || !body) {
+            await CampaignUrlModel.findOneAndUpdate({ url, campaignId: campaignJson.id }, {
+                error: true,
+                errorReason: "Couldn't extract title and body"
+            });
             return;
         }
 

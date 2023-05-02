@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import { catchAsync } from "../utils";
 import { Request, Response } from "express";
-import { createCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { createCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign, deleteUserCampaign } from "./campaign.service";
 import { JobOptions } from "bull";
 import getCampaignQueue from "./../../crawler/queue";
 
@@ -48,4 +48,11 @@ export const getSingleCampaignUrlsController = catchAsync(async (req: Request, r
     const { page = "1" } = req.query as { page?: string };
     const userCampaign = await getSingleCampaignUrls(user, campaignId, page, limit);
     res.status(httpStatus.CREATED).send(userCampaign);
+});
+
+export const deleteUserCampaignController = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user?.id || "";
+    const campaignId = req.params["id"] || "";
+    const userCampaign = await deleteUserCampaign(user, campaignId);
+    res.status(httpStatus.MOVED_PERMANENTLY).send(userCampaign);
 });
