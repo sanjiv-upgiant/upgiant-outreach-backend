@@ -63,15 +63,20 @@ const getCampaignQueue = (queueId: string) => {
             const { title: urlTitle, body: urlBody } = extractTitleAndText(html);
             title = urlTitle;
             body = urlBody;
-            urlFromDatabase = await UrlModel.findByIdAndUpdate({ url }, {
+            urlFromDatabase = await UrlModel.findOneAndUpdate({ url }, {
                 html,
                 url,
                 title: urlTitle,
                 body: urlBody,
                 status: UrlStatus.QUEUED
             }, {
-                upsert: true
+                upsert: true,
+                new: true
             });
+        }
+
+        if (!urlFromDatabase) {
+            return;
         }
 
         if (status !== UrlStatus.SUMMARY_EXTRACTED) {
