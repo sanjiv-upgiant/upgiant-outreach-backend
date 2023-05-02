@@ -53,7 +53,7 @@ const getCampaignQueue = (queueId: string) => {
         let body = "";
         let status = UrlStatus.QUEUED;
         let urlFromDatabase = await UrlModel.findOne({ url });
-        if (urlFromDatabase) {
+        if (urlFromDatabase?.title) {
             title = urlFromDatabase.title;
             body = urlFromDatabase.body;
             status = urlFromDatabase.status;
@@ -63,12 +63,14 @@ const getCampaignQueue = (queueId: string) => {
             const { title: urlTitle, body: urlBody } = extractTitleAndText(html);
             title = urlTitle;
             body = urlBody;
-            urlFromDatabase = await UrlModel.create({
+            urlFromDatabase = await UrlModel.findByIdAndUpdate({ url }, {
                 html,
                 url,
                 title: urlTitle,
                 body: urlBody,
                 status: UrlStatus.QUEUED
+            }, {
+                upsert: true
             });
         }
 
