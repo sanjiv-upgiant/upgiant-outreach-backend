@@ -32,7 +32,7 @@ export const getSnovioAccessTokenIfNeeded = async (integrationId: string, client
     return newAccessToken;
 };
 
-const getSnovioAccessToken = async (clientId: string, clientSecret: string) => {
+export const getSnovioAccessToken = async (clientId: string, clientSecret: string) => {
 
     const params = {
         grant_type: 'client_credentials',
@@ -40,13 +40,8 @@ const getSnovioAccessToken = async (clientId: string, clientSecret: string) => {
         client_secret: clientSecret
     };
 
-    try {
-        const response = await axios.post('https://api.snov.io/v1/oauth/access_token', params);
-        return response.data.access_token;
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
+    const response = await axios.post('https://api.snov.io/v1/oauth/access_token', params);
+    return response.data.access_token;
 }
 
 const getEmailFinderFromFirstNameAndLastName = async (accessToken: string, firstName: string, lastName: string, domain: string, rateLimit: IRateLimitConfig = {

@@ -12,6 +12,7 @@ import CampaignModel from './../modules/campaign/campaign.model';
 
 
 
+
 // Create the Bull queue
 export const bullQueues: Queue.Queue<any>[] = [];
 const getCampaignQueue = (queueId: string) => {

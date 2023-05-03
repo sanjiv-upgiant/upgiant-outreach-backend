@@ -54,5 +54,5 @@ export const deleteUserCampaignController = catchAsync(async (req: Request, res:
     const user = req.user?.id || "";
     const campaignId = req.params["id"] || "";
     const userCampaign = await deleteUserCampaign(user, campaignId);
-    res.status(httpStatus.MOVED_PERMANENTLY).send(userCampaign);
+    res.status(httpStatus.NO_CONTENT).send(userCampaign);
 });

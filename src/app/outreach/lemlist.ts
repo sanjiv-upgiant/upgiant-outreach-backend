@@ -17,3 +17,10 @@ export const addLeadToCampaignUsingLemlist = async (accessToken: string, campaig
     );
     return response.data;
 };
+
+export const getLemlistTeam = async (accessToken: string): Promise<any> => {
+    const response = await axios.get(
+        `https://api.lemlist.com/api/team?access_token=${accessToken}`,
+    );
+    return response.data;
+}

@@ -1,14 +1,30 @@
-import { getSnovioAccessTokenIfNeeded } from "./../../app/email-search/snovio";
+import { getJson } from "serpapi";
+import { getSnovioAccessToken } from "./../../app/email-search/snovio";
+import { testOpenAI } from "./../../app/openai";
+import { getLemlistTeam } from "./../../app/outreach/lemlist";
 import { IIntegration, IntegrationTypes } from "./integration.interfaces";
 import IntegrationModel from "./integration.model";
 
+
 export const addNewIntegration = async (integration: IIntegration, user: string) => {
-    const createdIntegration = await IntegrationModel.create({ ...integration, user });
     if (integration.type === IntegrationTypes.SNOVIO) {
-        const accessToken = await getSnovioAccessTokenIfNeeded(createdIntegration.id, integration.clientId, integration.clientSecret);
-        createdIntegration.accessToken = accessToken;
-        await createdIntegration.save();
+        const accessToken = await getSnovioAccessToken(integration.clientId, integration.clientSecret);
+        integration.accessToken = accessToken;
     }
+    else if (integration.type === IntegrationTypes.LEMLIST) {
+        await getLemlistTeam(integration.accessToken);
+    }
+    else if (integration.type === IntegrationTypes.OPENAI) {
+        await testOpenAI(integration.accessToken);
+    }
+    else if (integration.type === IntegrationTypes.SERPAPI) {
+        const res = await getJson("google", { q: `Hello World!`, api_key: integration.accessToken });
+        if (!res?.search_metadata) {
+            throw Error("Invalid key");
+        }
+    }
+
+    const createdIntegration = await IntegrationModel.create({ ...integration, user });
     return createdIntegration;
 }
 
