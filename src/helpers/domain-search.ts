@@ -1,14 +1,13 @@
-import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import { getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch } from "./../app/email-search/snovio";
-import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
+import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
+import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
+import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
-import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
-import { logger } from "./../modules/logger";
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId } = campaign;
+    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -72,41 +71,32 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             openAIApiKey: openAIIntegration.accessToken
         });
 
-        try {
-            const { subject, body } = JSON.parse(response);
+        const { subject, body } = JSON.parse(response);
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+            emailSubject: subject,
+            emailBody: body
+        });
+
+        const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+        if (!outreachIntegration) {
+            return;
+        }
+        if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
+            const { accessToken } = outreachIntegration;
+            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], {
+                rightOCompanyName: contactEmail["companyName"],
+                rightODesignation: contactEmail["position"],
+                rightOFirstName: contactEmail["firstName"],
+                rightOLastName: contactEmail["lastName"],
+                rightOEmailBody: body,
+                rightOEmailSubject: subject,
+            })
+
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 emailSubject: subject,
-                emailBody: body
+                emailBody: body,
+                isCompleted: true
             });
-
-            const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-            if (!outreachIntegration) {
-                return;
-            }
-            if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
-                const { accessToken } = outreachIntegration;
-                await addLeadToCampaignUsingLemlist(accessToken, campaignId, contactEmail["email"], {
-                    rightOCompanyName: contactEmail["companyName"],
-                    rightODesignation: contactEmail["position"],
-                    rightOFirstName: contactEmail["firstName"],
-                    rightOLastName: contactEmail["lastName"],
-                    rightOEmailBody: body,
-                    rightOEmailSubject: subject,
-                })
-
-                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                    emailSubject: subject,
-                    emailBody: body,
-                    isCompleted: true
-                });
-            }
-        }
-        catch (err: any) {
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                error: true,
-                errorReason: "Something went wrong " + err?.message
-            });
-            logger.error(`parsing or adding lead to campaign error: ${err?.message}`)
         }
     }
 }

@@ -18,6 +18,7 @@ export const createCampaignValidation = {
             SearchType.DOMAINS_WITH_SERP
         ).required(),
         emailSearchServiceId: Joi.string().required(),
+        emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),
         serpApiId: Joi.when('searchType', {

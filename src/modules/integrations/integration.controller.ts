@@ -1,7 +1,14 @@
 import httpStatus from "http-status";
 import { catchAsync } from "../utils";
 import { Request, Response } from "express"
-import { addNewIntegration, deleteIntegration, getUserIntegrations } from "./integration.service";
+import { addNewIntegration, deleteIntegration, getCampaignList, getUserIntegrations } from "./integration.service";
+
+export const getCampaignsFromIntegrationController = catchAsync(async (req: Request, res: Response) => {
+    const integrationId = req.params["id"] ?? "";
+    const user = req.user?.id || "";
+    const campaignList = await getCampaignList(integrationId, user);
+    res.status(httpStatus.OK).send(campaignList);
+});
 
 export const addIntegrationController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";

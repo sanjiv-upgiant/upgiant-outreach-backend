@@ -1,9 +1,25 @@
 import { getJson } from "serpapi";
 import { getSnovioAccessToken } from "./../../app/email-search/snovio";
 import { testOpenAI } from "./../../app/openai";
-import { getLemlistTeam } from "./../../app/outreach/lemlist";
+import { getCampaignsFromLemlist, getLemlistTeam } from "./../../app/outreach/lemlist";
 import { IIntegration, IntegrationTypes } from "./integration.interfaces";
 import IntegrationModel from "./integration.model";
+
+export const getCampaignList = async (integrationId: string, user: string, offset = "") => {
+    const integration = await IntegrationModel.findOne({ _id: integrationId, user });
+    if (!integration) {
+        return;
+    }
+    const integrationCampaignsKey = `campaignsList-${offset}`;
+    if (integration.meta && integration.meta[integrationCampaignsKey]) {
+        return integration?.meta[integrationCampaignsKey];
+    }
+    const response = await getCampaignsFromLemlist(integration?.accessToken ?? "", offset);
+    integration.meta = {};
+    integration.meta[integrationCampaignsKey] = response;
+    await integration.save();
+    return response;
+}
 
 
 export const addNewIntegration = async (integration: IIntegration, user: string) => {
@@ -24,7 +40,7 @@ export const addNewIntegration = async (integration: IIntegration, user: string)
         }
     }
 
-    const createdIntegration = await IntegrationModel.create({ ...integration, user });
+    const createdIntegration = await IntegrationModel.create({ ...integration, user, meta: {} });
     return createdIntegration;
 }
 

@@ -24,3 +24,9 @@ export const getLemlistTeam = async (accessToken: string): Promise<any> => {
     );
     return response.data;
 }
+
+export const getCampaignsFromLemlist = async (accessToken: string, offset = "") => {
+    const url = `https://api.lemlist.com/api/campaigns?access_token=${accessToken}&offset=${offset}`;
+    const response = await axios.get(url);
+    return response.data
+}

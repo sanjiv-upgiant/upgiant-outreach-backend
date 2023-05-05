@@ -2,8 +2,13 @@ import { Document, Model } from "mongoose";
 
 export enum CampaignStatus {
     PROGRESS = "PROGRESS",
-    FINISHED = "FINISHED",
     ERROR = "ERRORED",
+    FINISHED = "FINISHED",
+}
+
+export enum CampaignRunningStatus {
+    PAUSED = "PAUSED",
+    RUNNING = "RUNNING",
 }
 
 export enum SearchType {
@@ -27,6 +32,7 @@ export enum OutreachAgent {
 export interface ICampaign {
     user: string;
     name: string;
+    runStatus: CampaignRunningStatus;
     urls: string[];
     status: CampaignStatus,
     modelName: string,
@@ -42,6 +48,7 @@ export interface ICampaign {
     outreachAgentId: string,
     includeDetails: string,
     openAiIntegrationId: string,
+    emailSearchServiceCampaignId: string
 }
 
 export enum UrlStatus {

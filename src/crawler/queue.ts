@@ -1,20 +1,18 @@
 import Queue from 'bull';
+import { searchWithDomain } from './../helpers/domain-search';
+import { searchWithSerpAndDomain } from './../helpers/domain-with-serp-search';
 import UrlModel, { CampaignUrlModel } from './../modules/campaign/Url.model';
 import { CampaignStatus, ICampaignDoc, SearchType, UrlStatus } from './../modules/campaign/campaign.interfaces';
+import CampaignModel from './../modules/campaign/campaign.model';
+import IntegrationModel from './../modules/integrations/integration.model';
 import { extractCompanySummaryFromTitleAndBody } from './../modules/langchain/summary';
 import { cleanupAllAxiosInstances } from './../modules/limitedAxios';
 import { extractTitleAndText } from './../modules/utils/url';
 import scrape from './scraper';
-import { searchWithDomain } from './../helpers/domain-search';
-import { searchWithSerpAndDomain } from './../helpers/domain-with-serp-search';
-import IntegrationModel from './../modules/integrations/integration.model';
-import CampaignModel from './../modules/campaign/campaign.model';
 
 
 
 
-// Create the Bull queue
-export const bullQueues: Queue.Queue<any>[] = [];
 const getCampaignQueue = (queueId: string) => {
 
     const scrapeQueue = new Queue(queueId, { redis: { port: 6379, host: '127.0.0.1' } });
@@ -28,10 +26,13 @@ const getCampaignQueue = (queueId: string) => {
 
     scrapeQueue.on('failed', (job, err) => {
         console.log(`Job ${job.id} failed with error ${err}`);
+        const { url } = job.data;
 
-        CampaignModel.findByIdAndUpdate(queueId, {
-            status: CampaignStatus.ERROR
+        CampaignUrlModel.findOne({ url, campaignId: queueId }, {
+            error: true,
+            errorReason: `${err?.message}. Something went wrong`
         })
+
     });
 
     scrapeQueue.process(async (job) => {
@@ -106,7 +107,6 @@ const getCampaignQueue = (queueId: string) => {
 
     });
 
-    bullQueues.push(scrapeQueue);
 
     return scrapeQueue;
 }
