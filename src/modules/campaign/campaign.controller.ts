@@ -34,7 +34,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
 export const getUserCampaignsController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const { page = "1" } = req.query as { page?: string };
-    const userCampaigns = await getUserCampaigns(user, page, "1");
+    const userCampaigns = await getUserCampaigns(user, page, limit);
     res.status(httpStatus.CREATED).send(userCampaigns);
 });
 

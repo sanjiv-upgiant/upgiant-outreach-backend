@@ -117,6 +117,6 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             }
             break;
         }
-
     }
 }
+

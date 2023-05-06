@@ -98,5 +98,6 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 isCompleted: true
             });
         }
+        break;
     }
 }

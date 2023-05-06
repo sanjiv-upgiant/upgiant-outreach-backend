@@ -1,12 +1,14 @@
 
 
+import { LLMChain } from "langchain/chains";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { humanPromptTemplateString, systemPromptTemplateString } from "./templates/email.template";
+import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
+
 
 
 
@@ -23,26 +25,28 @@ interface IEmailCampaignArgs {
 
 export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, openAIApiKey, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
     const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
-    const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
-    const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
-    const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])
-    const chatMessages = await chatPromptTemplate.formatPromptValue({
-        name,
-        designation,
-        businessDomain,
-        businessName,
-        businessInfo,
-        motive,
-        includeDetails
+    const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForInitialOutput);
+    const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForInitialOutput);
+    const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
+
+    const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate })
+
+    const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
+    const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);
+    const chatPromptTemplateForFinal = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForFinal, humanPromptTemplateForFinal]);
+    const finalEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplateForFinal })
+
+    // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
+    const initialResponse = await initialEmailChain.predict({
+        name, designation, businessDomain, businessName, businessInfo, motive, includeDetails,
     });
 
 
-    const response = await chat.call(chatMessages.toChatMessages());
+    const finalResponse = await finalEmailChain.predict({
+        email: initialResponse
+    })
+    return finalResponse;
+};
 
-    return removePlaceholders(response?.text || "");
-}
 
-const removePlaceholders = (text: string) => {
-    return text.replace(/\[[^\]]*\]/g, '');
-}
 

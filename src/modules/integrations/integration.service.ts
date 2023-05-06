@@ -7,17 +7,7 @@ import IntegrationModel from "./integration.model";
 
 export const getCampaignList = async (integrationId: string, user: string, offset = "") => {
     const integration = await IntegrationModel.findOne({ _id: integrationId, user });
-    if (!integration) {
-        return;
-    }
-    const integrationCampaignsKey = `campaignsList-${offset}`;
-    if (integration.meta && integration.meta[integrationCampaignsKey]) {
-        return integration?.meta[integrationCampaignsKey];
-    }
     const response = await getCampaignsFromLemlist(integration?.accessToken ?? "", offset);
-    integration.meta = {};
-    integration.meta[integrationCampaignsKey] = response;
-    await integration.save();
     return response;
 }
 
