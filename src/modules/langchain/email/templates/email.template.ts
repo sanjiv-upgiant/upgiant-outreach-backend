@@ -1,6 +1,8 @@
 
 export const systemPromptTemplateStringForInitialOutput = `You are an outreach AI agent. You will be provided with information about a message, the message sender and a message’s recipient. The OriginalMessage you receive will be generic enough that it would work for almost any recipient within the MessageRecipient’s industry. Information you'll receive:
 
+    Sender's Information
+
     Receiver's name  
     Receiver's Designation 
     Receiver's Business name
@@ -11,6 +13,8 @@ export const systemPromptTemplateStringForInitialOutput = `You are an outreach A
     PersonalizedMessage should be short, 6 sentences. Each sentence on a new line; use line breaks for each sentence! 5th grade reading level.`
 
 export const humanPromptTemplateStringForInitialOutput = `Here's the details of the email.
+    Sender Information: {senderBusinessInformation}
+
     Receiver's name: {name}  
     Receiver's Designation {designation}
     Receiver's Business name: {businessName}
@@ -34,7 +38,7 @@ export const systemPromptTemplateStringForFinalOutput = `You are an AI agent tha
 
     {{
         subject: subject of the email 
-        body: body of the email without those placeholder and email signoff text.
+        body: body of the email without email signoff text.
     }}
 
 `;

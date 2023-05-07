@@ -7,7 +7,7 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId } = campaign;
+    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderBusinessInformation } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -61,6 +61,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
     for (const contactEmail of contactEmails) {
         const response = await writeSubjectAndBodyOfEmail({
+            senderBusinessInformation,
             name: contactEmail["firstName"],
             designation: contactEmail["position"],
             businessName: contactEmail["companyName"],

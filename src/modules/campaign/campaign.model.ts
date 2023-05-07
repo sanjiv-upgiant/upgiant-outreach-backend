@@ -30,6 +30,10 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             enum: CampaignStatus,
             default: CampaignStatus.PROGRESS
         },
+        senderBusinessInformation: {
+            type: String,
+            required: true
+        },
         objective: String,
         audienceFilters: {
             seniority: String,

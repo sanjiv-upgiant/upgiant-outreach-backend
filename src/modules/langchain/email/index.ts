@@ -14,6 +14,7 @@ import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForIn
 
 interface IEmailCampaignArgs {
     name: string,
+    senderBusinessInformation: string,
     businessDomain: string,
     motive?: string,
     designation?: string,
@@ -23,7 +24,7 @@ interface IEmailCampaignArgs {
     openAIApiKey: string,
 }
 
-export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, openAIApiKey, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, openAIApiKey, senderBusinessInformation, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
     const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForInitialOutput);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForInitialOutput);
@@ -38,7 +39,7 @@ export const writeSubjectAndBodyOfEmail = async ({ name, businessDomain, openAIA
 
     // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
     const initialResponse = await initialEmailChain.predict({
-        name, designation, businessDomain, businessName, businessInfo, motive, includeDetails,
+        name, designation, businessDomain, businessName, businessInfo, motive, includeDetails, senderBusinessInformation
     });
 
 

@@ -75,12 +75,8 @@ const getDomainSearchedEmails = async (accessToken: string, domain: string, posi
 
     const query = stringify(params);
 
-    try {
-        const response = await axios.get('https://api.snov.io/v2/domain-emails-with-info?' + query);
-        return response.data;
-    } catch (error) {
-        return null;
-    }
+    const response = await axios.get('https://api.snov.io/v2/domain-emails-with-info?' + query);
+    return response.data;
 };
 
 export const getCacheDomainSearchedEmails = async (integration: string, accessToken: string, domain: string, positions: string[] = [], limit = "1", genericOrPersonal = "personal") => {

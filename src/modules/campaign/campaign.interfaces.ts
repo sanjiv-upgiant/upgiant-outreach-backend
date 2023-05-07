@@ -34,6 +34,7 @@ export interface ICampaign {
     name: string;
     runStatus: CampaignRunningStatus;
     urls: string[];
+    senderBusinessInformation: string,
     status: CampaignStatus,
     modelName: string,
     objective: string;

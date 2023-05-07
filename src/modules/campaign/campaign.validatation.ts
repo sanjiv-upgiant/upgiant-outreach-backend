@@ -6,6 +6,7 @@ export const createCampaignValidation = {
         name: Joi.string().required(),
         urls: Joi.array().items(Joi.string().uri().required()).required(),
         modelName: Joi.string().required(),
+        senderBusinessInformation: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
             position: Joi.string().optional().allow(""),
