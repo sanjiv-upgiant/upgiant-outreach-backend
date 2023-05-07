@@ -30,15 +30,16 @@ export const humanPromptTemplateStringForInitialOutput = `Here's the details of 
 
     Output should contains following two fields. 
     subject: subject of the email.
-    body: Body of the email without email sign offs`;
+    body: Body of the email without email sign offs. Format it properly using new line and spaces`;
+
 
 export const systemPromptTemplateStringForFinalOutput = `You are an AI agent that works with email. You will receive a raw email subject and email body. You should edit email messages and delete/remove unwanted parts. Rephrase placeholder texts like [Your Name]. For EmailSignoffs like "Best regards" "Sincerely" "cheers". Delete everything including and after the EmailSignoff. If you have to rephrase the sentence, do it. Remember: You only respond in JSON and it should contain 2 fields.  
-
-    Output should be in following JSON format with following fields. Do not yield any other fields.
+    
+    Output should be in following JSON format with following fields. Do not yield any other fields. Body field should be properly formatted using new line characters at required places and not just simple string.
 
     {{
         subject: subject of the email 
-        body: body of the email without email signoff text.
+        body: body of the email without email signoff text
     }}
 
 `;
