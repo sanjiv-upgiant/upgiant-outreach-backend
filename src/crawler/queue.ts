@@ -89,10 +89,9 @@ const getCampaignQueue = (queueId: string) => {
             if (!openAi) {
                 return;
             }
-            const res = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
-            const companyInfo = JSON.parse(res);
+            const info = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
             await UrlModel.findOneAndUpdate({ url }, {
-                info: companyInfo,
+                info,
                 status: UrlStatus.SUMMARY_EXTRACTED
             }, { upsert: true });
         }

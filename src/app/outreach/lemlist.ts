@@ -1,12 +1,7 @@
 import axios from 'axios';
 
 interface LeadData {
-    rightOEmailBody: string,
-    rightOEmailSubject: string,
-    rightOFirstName: string,
-    rightOLastName: string,
-    rightODesignation: string,
-    rightOCompanyName: string,
+    [x: string]: string
 }
 
 

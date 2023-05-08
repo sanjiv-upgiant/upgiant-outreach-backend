@@ -22,6 +22,12 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
     emailBody: {
         type: String,
     },
+    emailSubjects: {
+        type: [String],
+    },
+    emailBodies: {
+        type: [String],
+    },
     emailExtracted: {
         type: Boolean,
         default: false

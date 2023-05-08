@@ -30,9 +30,12 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             enum: CampaignStatus,
             default: CampaignStatus.PROGRESS
         },
-        senderBusinessInformation: {
-            type: String,
-            required: true
+        senderInformation: {
+            sendersName: String,
+            sendersCompanyBusinessSummary: String,
+            sendersEmail: String,
+            sendersCompanyDomainURL: String,
+            sendersProductService: String,
         },
         objective: String,
         audienceFilters: {
@@ -66,6 +69,10 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         },
         openAiIntegrationId: {
             type: String,
+            required: true
+        },
+        templates: {
+            type: [String],
             required: true
         }
     },

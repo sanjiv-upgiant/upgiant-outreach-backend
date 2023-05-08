@@ -10,7 +10,7 @@ import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderBusinessInformation } = campaign;
+    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     if (!serpApiIntegration) {
@@ -72,49 +72,69 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             });
         }
         else {
+            const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+            if (!outreachIntegration) {
+                return;
+            }
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 emailExtracted: true,
                 contactEmails
             });
 
             for (const contactEmail of contactEmails.emails) {
-                const response = await writeSubjectAndBodyOfEmail({
-                    senderBusinessInformation,
-                    name: contactEmails["firstName"],
-                    businessDomain: url,
-                    designation: employee["position"],
-                    businessInfo: JSON.stringify(info),
-                    motive: objective,
-                    includeDetails,
-                    openAIApiKey: openAIIntegration.accessToken
-                });
-
-                const { subject, body } = JSON.parse(response);
-                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                    emailSubject: subject,
-                    emailBody: body
-                });
-                const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-                if (!outreachIntegration) {
-                    return;
+                const emailBodies: string[] = [];
+                const emailSubjects: string[] = [];
+                for (const template of templates) {
+                    const response = await writeSubjectAndBodyOfEmail({
+                        template,
+                        senderInformation,
+                        name: contactEmails["firstName"],
+                        businessDomain: url,
+                        designation: employee["position"],
+                        businessInfo: JSON.stringify(info),
+                        motive: objective,
+                        includeDetails,
+                        openAIApiKey: openAIIntegration.accessToken
+                    });
+                    const { subject, body } = JSON.parse(response);
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                        emailSubject: subject,
+                        emailBody: body
+                    });
+                    emailBodies.push(body);
+                    emailSubjects.push(subject);
                 }
-                const { accessToken } = outreachIntegration;
-                await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail.email, {
-                    rightODesignation: employee["position"],
-                    rightOCompanyName: info["name"] || "",
-                    rightOFirstName: contactEmails.firstName,
-                    rightOLastName: contactEmails.lastName,
-                    rightOEmailBody: body,
-                    rightOEmailSubject: subject,
-                })
-
                 await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                    addedToOutreachAgent: true,
-                    emailSubject: subject,
-                    emailBody: body,
-                    isCompleted: true
+                    emailSubjects,
+                    emailBodies
                 });
-                break;
+
+                if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
+                    const { accessToken } = outreachIntegration;
+                    const rightOBody: { [x: string]: string } = {
+                        rightODesignation: employee["position"],
+                        rightOCompanyName: info["name"] || "",
+                        rightOFirstName: contactEmails.firstName,
+                        rightOLastName: contactEmails.lastName,
+                    }
+                    for (let i = 0; i < emailBodies.length; i++) {
+                        const emailBody = emailBodies[i];
+                        const emailSubject = emailSubjects[i];
+                        if (emailBody && emailSubject) {
+                            rightOBody[`rightOEmailBody-${i + 1}`] = emailBody;
+                            rightOBody[`rightOEmailSubject-${i + 1}`] = emailSubject;
+                        }
+                    }
+
+                    await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail.email, rightOBody)
+
+                    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                        addedToOutreachAgent: true,
+                        isCompleted: true
+                    });
+                    break;
+                }
+
             }
             break;
         }

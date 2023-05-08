@@ -34,7 +34,6 @@ export interface ICampaign {
     name: string;
     runStatus: CampaignRunningStatus;
     urls: string[];
-    senderBusinessInformation: string,
     status: CampaignStatus,
     modelName: string,
     objective: string;
@@ -49,7 +48,15 @@ export interface ICampaign {
     outreachAgentId: string,
     includeDetails: string,
     openAiIntegrationId: string,
-    emailSearchServiceCampaignId: string
+    emailSearchServiceCampaignId: string,
+    senderInformation: {
+        sendersName: string,
+        sendersCompanyBusinessSummary: string,
+        sendersEmail?: string,
+        sendersCompanyDomainURL?: string,
+        sendersProductService?: string,
+    },
+    templates: string[]
 }
 
 export enum UrlStatus {
@@ -84,6 +91,8 @@ export interface ICampaignUrl {
     campaignId: string,
     emailSubject: string,
     emailBody: string,
+    emailSubjects: string[],
+    emailBodies: string[],
     emailExtracted: boolean,
     isCompleted: boolean,
     error: boolean,

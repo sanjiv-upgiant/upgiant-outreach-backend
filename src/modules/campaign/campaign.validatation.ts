@@ -6,7 +6,6 @@ export const createCampaignValidation = {
         name: Joi.string().required(),
         urls: Joi.array().items(Joi.string().uri().required()).required(),
         modelName: Joi.string().required(),
-        senderBusinessInformation: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
             position: Joi.string().optional().allow(""),
@@ -28,5 +27,15 @@ export const createCampaignValidation = {
             otherwise: Joi.string().allow(null),
         }),
         includeDetails: Joi.string().optional(),
+        senderInformation: Joi.object().keys({
+            sendersName: Joi.string().required(),
+            sendersCompanyBusinessSummary: Joi.string().required(),
+            sendersEmail: Joi.string().email().optional(),
+            sendersCompanyDomainURL: Joi.string().uri().required(),
+            sendersProductService: Joi.string().optional(),
+        }),
+        templates: Joi.array()
+            .items(Joi.string())
+            .required()
     }),
 };

@@ -7,7 +7,7 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderBusinessInformation } = campaign;
+    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -58,44 +58,62 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         contactEmails
     });
 
+    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+    if (!outreachIntegration) {
+        return;
+    }
 
     for (const contactEmail of contactEmails) {
-        const response = await writeSubjectAndBodyOfEmail({
-            senderBusinessInformation,
-            name: contactEmail["firstName"],
-            designation: contactEmail["position"],
-            businessName: contactEmail["companyName"],
-            businessInfo: JSON.stringify(info),
-            businessDomain: url,
-            motive: objective,
-            includeDetails,
-            openAIApiKey: openAIIntegration.accessToken
-        });
+        const emailBodies: string[] = [];
+        const emailSubjects: string[] = [];
+        for (const template of templates) {
+            const response = await writeSubjectAndBodyOfEmail({
+                template,
+                senderInformation,
+                name: contactEmail["firstName"],
+                designation: contactEmail["position"],
+                businessName: contactEmail["companyName"],
+                businessInfo: JSON.stringify(info),
+                businessDomain: url,
+                motive: objective,
+                includeDetails,
+                openAIApiKey: openAIIntegration.accessToken
+            });
 
-        const { subject, body } = JSON.parse(response);
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            emailSubject: subject,
-            emailBody: body
-        });
-
-        const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-        if (!outreachIntegration) {
-            return;
+            const { subject, body } = JSON.parse(response);
+            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                emailSubject: subject,
+                emailBody: body
+            });
+            emailBodies.push(body);
+            emailSubjects.push(subject);
         }
+
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+            emailSubjects,
+            emailBodies
+        });
+
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
             const { accessToken } = outreachIntegration;
-            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], {
+            const rightOBody: { [x: string]: string } = {
                 rightOCompanyName: contactEmail["companyName"],
                 rightODesignation: contactEmail["position"],
                 rightOFirstName: contactEmail["firstName"],
                 rightOLastName: contactEmail["lastName"],
-                rightOEmailBody: body,
-                rightOEmailSubject: subject,
-            })
+            };
+            for (let i = 0; i < emailBodies.length; i++) {
+                const emailBody = emailBodies[i];
+                const emailSubject = emailSubjects[i];
+                if (emailBody && emailSubject) {
+                    rightOBody[`rightOEmailBody-${i + 1}`] = emailBody;
+                    rightOBody[`rightOEmailSubject-${i + 1}`] = emailSubject;
+                }
+            }
+
+            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], rightOBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                emailSubject: subject,
-                emailBody: body,
                 isCompleted: true
             });
         }
