@@ -30,9 +30,9 @@ export const createCampaignValidation = {
         senderInformation: Joi.object().keys({
             sendersName: Joi.string().required(),
             sendersCompanyBusinessSummary: Joi.string().required(),
-            sendersEmail: Joi.string().email().optional(),
-            sendersCompanyDomainURL: Joi.string().uri().required(),
-            sendersProductService: Joi.string().optional(),
+            sendersEmail: Joi.string().email().optional().allow(""),
+            sendersCompanyDomainURL: Joi.string().uri().optional().allow(""),
+            sendersProductService: Joi.string().optional().allow(""),
         }),
         templates: Joi.array()
             .items(Joi.string())

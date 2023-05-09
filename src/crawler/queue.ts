@@ -24,8 +24,8 @@ const getCampaignQueue = (queueId: string) => {
     });
 
     scrapeQueue.on('failed', (job, err) => {
-        console.log(`Job ${job.id} failed with error ${err}`);
         const { url } = job.data;
+        console.log(`Job ${job.id} with url ${url} failed with error ${err}`);
 
         CampaignUrlModel.findOne({ url, campaignId: queueId }, {
             error: true,
