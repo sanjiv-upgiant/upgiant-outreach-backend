@@ -75,7 +75,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 businessName: contactEmail["companyName"],
                 businessInfo: JSON.stringify(info),
                 businessDomain: url,
-                motive: objective,
+                objective,
                 includeDetails,
                 openAIApiKey: openAIIntegration.accessToken
             });
@@ -120,3 +120,25 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         break;
     }
 }
+
+// (async () => {
+//     const campaignModel = await CampaignModel.findById("645aa9ca441b918f72eab20f");
+//     const campaingUrl = await CampaignUrlModel.findById("645aa9e7bc4333b9546029c7");
+//     const urlDetail = await UrlModel.findOne({ url: campaingUrl?.url });
+//     const openAIIntegration = await IntegrationModel.findById(campaignModel?.openAiIntegrationId);
+//     if (campaignModel && campaingUrl && urlDetail && openAIIntegration) {
+//         const contactEmail = campaingUrl.contactEmails[0];
+//         await writeSubjectAndBodyOfEmail({
+//             template: campaignModel.templates[0] || "",
+//             senderInformation: campaignModel.senderInformation,
+//             name: contactEmail["firstName"],
+//             designation: contactEmail["position"],
+//             businessName: contactEmail["companyName"],
+//             businessInfo: JSON.stringify(urlDetail?.info || ""),
+//             businessDomain: urlDetail.url,
+//             objective: campaignModel.objective,
+//             includeDetails: "",
+//             openAIApiKey: openAIIntegration.accessToken
+//         })
+//     }
+// })();

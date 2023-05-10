@@ -92,7 +92,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                         businessDomain: url,
                         designation: employee["position"],
                         businessInfo: JSON.stringify(info),
-                        motive: objective,
+                        objective,
                         includeDetails,
                         openAIApiKey: openAIIntegration.accessToken
                     });

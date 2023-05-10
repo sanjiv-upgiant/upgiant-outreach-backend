@@ -7,7 +7,7 @@ import {
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
+import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondOutput } from "./templates/email.template";
 
 
 interface ISenderInformation {
@@ -23,7 +23,7 @@ interface IEmailCampaignArgs {
     template: string,
     senderInformation: ISenderInformation,
     businessDomain: string,
-    motive?: string,
+    objective?: string,
     designation?: string,
     businessInfo?: string,
     businessName?: string,
@@ -31,13 +31,23 @@ interface IEmailCampaignArgs {
     openAIApiKey: string,
 }
 
-export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomain, openAIApiKey, senderInformation, businessName = "", includeDetails = "", designation = "", motive = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomain, openAIApiKey, senderInformation, businessName = "", includeDetails = "", designation = "", objective = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
     const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
+
+    const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
+
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForInitialOutput);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForInitialOutput);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
 
-    const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate })
+    const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate });
+
+
+    const systemPromptTemplateSecond = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondOutput);
+    const humanPromptTemplateSecond = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondOutput);
+    const chatPromptTemplateSecond = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateSecond, humanPromptTemplateSecond]);
+
+    const secondEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplateSecond });
 
     const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
     const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);
@@ -46,13 +56,25 @@ export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomai
 
     // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
     const initialResponse = await initialEmailChain.predict({
-        name, designation, businessDomain, businessName, businessInfo, motive, includeDetails, senderInformation, template
+        name, designation, businessDomain, businessName, businessInfo, objective, includeDetails, sendersName,
+        sendersCompanyBusinessSummary, sendersCompanyDomainURL, sendersEmail, sendersProductService
     });
 
+    console.log("Initial Response =>", initialResponse)
+
+    const secondResponse = await secondEmailChain.predict({
+        email: initialResponse,
+        template
+    })
+
+
+    console.log("Second Response =>", secondResponse)
 
     const finalResponse = await finalEmailChain.predict({
-        email: initialResponse
+        email: secondResponse
     })
+
+    console.log("Final Response =>", finalResponse);
     return finalResponse;
 };
 
