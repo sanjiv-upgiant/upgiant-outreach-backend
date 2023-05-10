@@ -6,6 +6,7 @@ import tokenTypes from '../token/token.types';
 import { getUserByEmail, getUserById, updateUserById } from '../user/user.service';
 import { IUserDoc, IUserWithTokens } from '../user/user.interfaces';
 import { generateAuthTokens, verifyToken } from '../token/token.service';
+import { createStripeCustomer } from './../../app/stripe-payment';
 
 /**
  * Login with username and password
@@ -18,6 +19,13 @@ export const loginUserWithEmailAndPassword = async (email: string, password: str
   if (!user || !(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
+
+  if (!user?.stripeCustomerId) {
+    const customer = await createStripeCustomer(email);
+    user.stripeCustomerId = customer.id;
+    await user.save();
+  }
+
   return user;
 };
 

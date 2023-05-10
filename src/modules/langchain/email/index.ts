@@ -60,21 +60,16 @@ export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomai
         sendersCompanyBusinessSummary, sendersCompanyDomainURL, sendersEmail, sendersProductService
     });
 
-    console.log("Initial Response =>", initialResponse)
-
     const secondResponse = await secondEmailChain.predict({
         email: initialResponse,
         template
     })
 
 
-    console.log("Second Response =>", secondResponse)
-
     const finalResponse = await finalEmailChain.predict({
         email: secondResponse
     })
 
-    console.log("Final Response =>", finalResponse);
     return finalResponse;
 };
 

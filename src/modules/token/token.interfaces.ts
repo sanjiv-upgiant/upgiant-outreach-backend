@@ -11,9 +11,9 @@ export interface IToken {
 
 export type NewToken = Omit<IToken, 'blacklisted'>;
 
-export interface ITokenDoc extends IToken, Document {}
+export interface ITokenDoc extends IToken, Document { }
 
-export interface ITokenModel extends Model<ITokenDoc> {}
+export interface ITokenModel extends Model<ITokenDoc> { }
 
 export interface IPayload extends JwtPayload {
   sub: string;

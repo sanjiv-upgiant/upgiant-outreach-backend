@@ -6,6 +6,8 @@ export interface IUser {
   email: string;
   password: string;
   isEmailVerified: boolean;
+  stripeCustomerId?: string;
+  hasPaymentMethodAdded?: boolean;
 }
 
 export interface IUserDoc extends IUser, Document {

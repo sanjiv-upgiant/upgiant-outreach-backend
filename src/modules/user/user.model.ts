@@ -35,6 +35,13 @@ const userSchema = new mongoose.Schema<IUserDoc, IUserModel>(
       type: Boolean,
       default: false,
     },
+    stripeCustomerId: {
+      type: String,
+    },
+    hasPaymentMethodAdded: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,

@@ -134,6 +134,7 @@
     "querystring": "^0.2.1",
     "redis": "^4.6.5",
     "serpapi": "^1.1.1",
+    "stripe": "^12.4.0",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.2.0",
     "validator": "^13.7.0",

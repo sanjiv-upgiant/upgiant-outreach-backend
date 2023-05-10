@@ -5,6 +5,8 @@ import { NewCreatedUser } from './user.interfaces';
 const createUserBody: Record<keyof NewCreatedUser, any> = {
   email: Joi.string().required().email(),
   password: Joi.string().required().custom(password),
+  stripeCustomerId: Joi.string().optional(),
+  hasPaymentMethodAdded: Joi.boolean().optional().default(false),
 };
 
 export const createUser = {

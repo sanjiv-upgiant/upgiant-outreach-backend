@@ -64,7 +64,7 @@ const getEmailFinderFromFirstNameAndLastName = async (accessToken: string, first
 
 }
 
-const getDomainSearchedEmails = async (accessToken: string, domain: string, positions: string[] = [], limit = "5", genericOrPersonal = "personal") => {
+const getDomainSearchedEmails = async (accessToken: string, domain: string, positions: string[] = [], limit = "1", genericOrPersonal = "personal") => {
     const params = {
         access_token: accessToken,
         domain,

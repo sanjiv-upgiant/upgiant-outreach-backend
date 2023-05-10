@@ -10,14 +10,14 @@ import { IUserDoc } from '../user/user.interfaces';
 export const register = catchAsync(async (req: Request, res: Response) => {
   const user = await userService.registerUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  res.status(httpStatus.CREATED).send({ user, tokens, hasPaymentMethodAdded: user.hasPaymentMethodAdded ?? false });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await authService.loginUserWithEmailAndPassword(email, password);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user, tokens });
+  res.send({ user, tokens, hasPaymentMethodAdded: user.hasPaymentMethodAdded ?? false });
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
@@ -51,3 +51,18 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   await authService.verifyEmail(req.query['token']);
   res.status(httpStatus.NO_CONTENT).send();
 });
+
+export const createUserStripeSetupIntentSecretKeyController = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id ?? "";
+  const secretKey = await userService.createUserStripeSetupIntentSecretKeyService(userId);
+  res.status(httpStatus.CREATED).send({ secretKey });
+});
+
+
+export const enableSubscriptionForUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id ?? "";
+  const { setupIntentId } = req.body;
+  const isSuccess = await userService.checkSetupIntentAndUpdate(userId, setupIntentId);
+  res.status(httpStatus.CREATED).send(isSuccess);
+});
+

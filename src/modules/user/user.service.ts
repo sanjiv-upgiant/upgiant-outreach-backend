@@ -6,6 +6,7 @@ import { IOptions, QueryResult } from '../paginate/paginate';
 import {
   NewCreatedUser, UpdateUserBody, IUserDoc, NewRegisteredUser,
 } from './user.interfaces';
+import { checkIfSetupIntentSucceeded, createSetupIntentSecret, createStripeCustomer, enableSubscriptionForCustomer } from './../../app/stripe-payment';
 
 /**
  * Create a user
@@ -16,8 +17,29 @@ export const createUser = async (userBody: NewCreatedUser): Promise<IUserDoc> =>
   if (await User.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  return User.create(userBody);
+  const user = await User.create(userBody);
+  const customer = await createStripeCustomer(user.email)
+  user.stripeCustomerId = customer.id;
+  await user.save();
+  return user;
 };
+
+export const createUserStripeSetupIntentSecretKeyService = async (userId: string) => {
+  const user = await User.findById(userId);
+  const stripeSecretKey = await createSetupIntentSecret(user?.stripeCustomerId || "");
+  return stripeSecretKey;
+}
+
+export const checkSetupIntentAndUpdate = async (userId: string, setupIntentId: string) => {
+  const user = await User.findById(userId);
+  const isSetupIntentSuccess = await checkIfSetupIntentSucceeded(setupIntentId);
+  if (isSetupIntentSuccess && user && !user.hasPaymentMethodAdded) {
+    user.hasPaymentMethodAdded = true;
+    await user.save();
+    await enableSubscriptionForCustomer(user.stripeCustomerId ?? "");
+  }
+  return true;
+}
 
 /**
  * Register a user
@@ -28,7 +50,13 @@ export const registerUser = async (userBody: NewRegisteredUser): Promise<IUserDo
   if (await User.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  return User.create(userBody);
+  const user = await User.create(userBody);
+  if (!user?.stripeCustomerId) {
+    const customer = await createStripeCustomer(user.email);
+    user.stripeCustomerId = customer.id;
+    await user.save();
+  }
+  return user;
 };
 
 /**

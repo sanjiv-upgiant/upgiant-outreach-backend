@@ -21,6 +21,9 @@ const envVarsSchema = Joi.object()
     SMTP_PASSWORD: Joi.string().description('password for email server'),
     EMAIL_FROM: Joi.string().description('the from field in the emails sent by the app'),
     CLIENT_URL: Joi.string().required().description('Client url'),
+    STRIPE_CLIENT_ID: Joi.string().required().description("Stripe Client Id required"),
+    STRIPE_CLIENT_SECRET: Joi.string().required().description("Stripe Client SECRET required"),
+    STRIPE_RECURRING_PRICE: Joi.string().required().description("Recurring price id required"),
   })
   .unknown();
 
@@ -65,6 +68,9 @@ const config = {
     from: envVars.EMAIL_FROM,
   },
   clientUrl: envVars.CLIENT_URL,
+  stripeClientId: envVars.STRIPE_CLIENT_ID,
+  stripeClientSecret: envVars.STRIPE_CLIENT_SECRET,
+  stripeRecurringPriceId: envVars.STRIPE_RECURRING_PRICE,
 };
 
 export default config;
