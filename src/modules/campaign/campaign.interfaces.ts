@@ -56,7 +56,13 @@ export interface ICampaign {
         sendersCompanyDomainURL: string,
         sendersProductService?: string,
     },
-    templates: string[]
+    templates: string[],
+    emailsSent: number,
+    emailsOpened: number,
+    emailsClicked: number,
+    emailsReplied: number,
+    emailsBounced: number,
+    emailsInterested: number
 }
 
 export enum UrlStatus {

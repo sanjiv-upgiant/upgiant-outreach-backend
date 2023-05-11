@@ -1,10 +1,15 @@
 
+import IntegrationModel from '../integrations/integration.model';
+import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
 import getCampaignQueue from './../../crawler/queue';
 import { CampaignUrlModel } from './Url.model';
 import { ICampaign } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
 
 export const createCampaign = async (campaign: ICampaign, user: string) => {
+    const emailSenderCampaignId = campaign.emailSearchServiceCampaignId;
+    const integrationController = await IntegrationModel.findById(campaign.outreachAgentId);
+    await addLemlistWebHookForGivenCampaign(emailSenderCampaignId, integrationController?.accessToken ?? "");
     return CampaignModel.create({ ...campaign, user });
 }
 

@@ -74,7 +74,31 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         templates: {
             type: [String],
             required: true
-        }
+        },
+        emailsSent: {
+            type: Number,
+            default: 0
+        },
+        emailsOpened: {
+            type: Number,
+            default: 0
+        },
+        emailsClicked: {
+            type: Number,
+            default: 0
+        },
+        emailsReplied: {
+            type: Number,
+            default: 0
+        },
+        emailsBounced: {
+            type: Number,
+            default: 0
+        },
+        emailsInterested: {
+            type: Number,
+            default: 0
+        },
     },
     {
         timestamps: true,

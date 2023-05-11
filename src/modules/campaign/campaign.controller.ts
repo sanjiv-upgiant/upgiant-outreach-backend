@@ -20,6 +20,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     const user = req.user?.id || "";
     const campaign = await createCampaign(req.body, user);
     const { urls = [] } = req.body;
+
     const scrapeQueue = getCampaignQueue(campaign.id);
     for (const url of urls) {
         scrapeQueue.add({

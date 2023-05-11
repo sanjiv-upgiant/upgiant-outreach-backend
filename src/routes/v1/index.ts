@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 import authRoute from './auth.route';
 import campaignRoute from './campaign.route';
 import integrationRoute from './integration.route';
+import lemlistRoute from "./lemlist";
 import { serverAdapter } from './../../crawler/adapter';
 
 
@@ -16,6 +17,10 @@ const defaultIRoute: IRoute[] = [
   {
     path: '/auth',
     route: authRoute,
+  },
+  {
+    path: '/lemlist-hooks',
+    route: lemlistRoute,
   },
   {
     path: '/campaigns',
