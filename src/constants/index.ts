@@ -1,2 +1,2 @@
 
-export const CACHE_TTL = 2 * 24 * 60 * 60; // 2 days in seconds
+export const CACHE_TTL = 20 * 24 * 60 * 60; // 20 days in seconds

@@ -27,13 +27,23 @@ export const checkIfSetupIntentSucceeded = async (setupIntentId: string) => {
 }
 
 export const enableSubscriptionForCustomer = async (customerId: string) => {
-    await stripe.subscriptions.create({
+    const stripeObject: Stripe.SubscriptionCreateParams = {
         customer: customerId,
         items: [
             {
                 price: config.stripeRecurringPriceId,
             },
         ],
-        trial_end: 1687371240   // june 21
-    });
+    }
+
+    const now = new Date();
+    const releaseDate = new Date(1687371240 * 1000);
+    if (releaseDate > now) {
+        stripeObject.trial_end = 1687371240
+    }
+    else {
+        stripeObject.trial_period_days = 7
+    }
+
+    await stripe.subscriptions.create(stripeObject);
 }

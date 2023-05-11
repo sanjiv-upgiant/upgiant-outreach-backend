@@ -51,9 +51,9 @@ export interface ICampaign {
     emailSearchServiceCampaignId: string,
     senderInformation: {
         sendersName: string,
+        sendersEmail: string,
         sendersCompanyBusinessSummary: string,
-        sendersEmail?: string,
-        sendersCompanyDomainURL?: string,
+        sendersCompanyDomainURL: string,
         sendersProductService?: string,
     },
     templates: string[]
@@ -76,7 +76,7 @@ export interface IUrl {
     html: string,
     title: string,
     body: string,
-    info: { [x: string]: any },
+    info: string,
     status: UrlStatus
 }
 

@@ -69,7 +69,7 @@ const urlSchema = new mongoose.Schema<IUrlDoc, IUrlModel>(
             type: String,
         },
         info: {
-            type: Object,
+            type: String,
         },
         status: {
             type: Number,

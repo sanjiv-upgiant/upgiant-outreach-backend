@@ -7,32 +7,40 @@ import {
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondOutput } from "./templates/email.template";
+import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
 
 
 interface ISenderInformation {
     sendersName: string;
     sendersCompanyBusinessSummary: string;
-    sendersEmail?: string;
-    sendersCompanyDomainURL?: string;
+    sendersCompanyDomainURL: string;
+    sendersEmail: string;
     sendersProductService?: string;
 }
 
-interface IEmailCampaignArgs {
-    name: string,
-    template: string,
-    senderInformation: ISenderInformation,
-    businessDomain: string,
-    objective?: string,
-    designation?: string,
-    businessInfo?: string,
-    businessName?: string,
-    includeDetails?: string,
-    openAIApiKey: string,
+interface IRecipientInformation {
+    recipientEmail: string,
+    recipientBusinessDomainURL: string,
+    recipientBusinessSummary: string,
+    recipientBusinessName?: string,
+    recipientDesignation?: string,
+    recipientName?: string,
 }
 
-export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomain, openAIApiKey, senderInformation, businessName = "", includeDetails = "", designation = "", objective = "To write personalized email", businessInfo = "" }: IEmailCampaignArgs) => {
-    const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
+interface IEmailCampaignArgs {
+    template: string,
+    openAIApiKey: string,
+    senderInformation: ISenderInformation,
+    recipientInformation: IRecipientInformation,
+    objective?: string,
+    includeDetails?: string,
+}
+
+
+export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", objective = "To write personalized email", recipientInformation }: IEmailCampaignArgs) => {
+    const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
+
+    const chat = new ChatOpenAI({ temperature: 0, openAIApiKey });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
@@ -43,31 +51,33 @@ export const writeSubjectAndBodyOfEmail = async ({ template, name, businessDomai
     const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate });
 
 
-    const systemPromptTemplateSecond = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondOutput);
-    const humanPromptTemplateSecond = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondOutput);
-    const chatPromptTemplateSecond = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateSecond, humanPromptTemplateSecond]);
-
-    const secondEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplateSecond });
+    const chat2 = new ChatOpenAI({ temperature: 0, openAIApiKey });
 
     const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
     const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);
     const chatPromptTemplateForFinal = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForFinal, humanPromptTemplateForFinal]);
-    const finalEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplateForFinal })
+    const finalEmailChain = new LLMChain({ llm: chat2, prompt: chatPromptTemplateForFinal })
 
     // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
     const initialResponse = await initialEmailChain.predict({
-        name, designation, businessDomain, businessName, businessInfo, objective, includeDetails, sendersName,
-        sendersCompanyBusinessSummary, sendersCompanyDomainURL, sendersEmail, sendersProductService
+        template,
+        recipientEmail,
+        recipientBusinessDomainURL,
+        recipientBusinessSummary,
+        sendersName,
+        sendersEmail,
+        sendersCompanyDomainURL,
+        sendersCompanyBusinessSummary,
+        recipientBusinessName,
+        recipientDesignation,
+        recipientName,
+        sendersProductService,
+        objective,
+        includeDetails,
     });
 
-    const secondResponse = await secondEmailChain.predict({
-        email: initialResponse,
-        template
-    })
-
-
     const finalResponse = await finalEmailChain.predict({
-        email: secondResponse
+        email: initialResponse
     })
 
     return finalResponse;

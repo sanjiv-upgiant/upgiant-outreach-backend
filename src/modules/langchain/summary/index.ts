@@ -9,7 +9,7 @@ import { humanPromptTemplateString, systemPromptTemplateString } from "./templat
 
 
 export const extractCompanySummaryFromTitleAndBody = async (title: string, body: string, openAIApiKey: string) => {
-    const chat = new ChatOpenAI({ temperature: 0.7, openAIApiKey });
+    const chat = new ChatOpenAI({ temperature: 0, openAIApiKey });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateString);
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateString);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate])

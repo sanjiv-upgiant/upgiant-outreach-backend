@@ -1,71 +1,77 @@
 
-export const systemPromptTemplateStringForInitialOutput = `You are a professional email writer. You will be provided with information about an email which includes info about recipient and sender. Your job is to write professional email using those information ONLY. Information you'll receive:
+export const systemPromptTemplateStringForInitialOutput = `
+You personalize outreach messages.
 
-    You’ll always receive these fields:
+You will be provided with an OriginalMessage, info about the sender and info about the recipient. 
 
-    Recipients Name
-    Recipients Email
-    Recipients Company Domain URL
-    Recipients Company Business Summary
+REQUIRED FIELDS, 
+you’ll always receive these fields:
 
-    Senders Email
-    Senders Company Domain URL
-    Senders Company Business Summary
-    Senders Product Service
-    Senders Campaign Objective
+1) OriginalMessage
+2) RecipientsEmail
+3) RecipientsCompanyDomainURL
+4) RecipientsCompanyBusinessSummary
+5) SendersName
+6) SendersEmail
+7) SendersCompanyDomainURL
+8) SendersCompanyBusinessSummary
 
-    OPTIONAL FIELDS that you’ll only receive sometimes:
+OPTIONAL FIELDS 
+that you’ll only sometimes get:
 
-    RecipientsCompanyName
-    RecipientsSeniority
-    RecipientsDepartment
-    RecipientsJobTitle
+** RecipientsName
+** RecipientsCompanyName
+** RecipientsSeniority
+** RecipientsDepartment
+** RecipientsJobTitle
+** SendersProductService
+** UserSalt
 
-    Your task is to write an updated personalized email that is more relevant to the recipient. The personalized email is unique and custom to the recipient.
++++++++++++++++++++++
+Your task is to write a close variant to the OriginalMessage called the PersonalizedMessage; this PersonalizedMessage should match the original messages structure, tone, style, length, substance, etc. - but it should also incorporate some of the required and optional information you were provided with; the end goal is to personalize the OriginalMessage with the new information.
 
-    The recipient should feel as if they are getting an original message that was designed specifically for them.
+How long (characters/words) is the OriginalMessage?  
+The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+
 `
 
 export const humanPromptTemplateStringForInitialOutput = `Here's the details of the email.
-Recipient name: {name}  
-Recipient Designation {designation}
-Recipient Business name: {businessName}
-Recipient Business Domain: {businessDomain}
-Recipient Business Summary: {businessInfo}
 
-Sender's Name: {sendersName}
-Sender's Email : {sendersEmail}
-Sender's Company Domain URL: {sendersCompanyDomainURL}
-Sender's Company Business Summary: {sendersCompanyBusinessSummary}
-Sender's Product Service: {sendersProductService}
+OriginalMessage: {template}
+RecipientsEmail: {recipientEmail}
+RecipientsCompanyDomainURL: {recipientBusinessDomainURL}
+RecipientsCompanyBusinessSummary: \n{recipientBusinessSummary}\n
 
-Email Objective: {objective}
+SendersName: {sendersName}
+SendersEmail: {sendersEmail}
+SenderCompanyDomainURL: {sendersCompanyDomainURL}
+SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
 
++++++ OPTIONAL FIELDS +++++
+RecipientBusinessName: {recipientBusinessName}
+RecipientDesignation {recipientDesignation}
+RecipientName: {recipientName}  
+SendersProductService: {sendersProductService}
+EmailObjective: {objective}
 Include following Details for email: {includeDetails}
 
-Do not use exclamation. Write email in a professional manner. No signature in email body please. Utilize customer information properly`;
+++++++++++++++++++
 
-export const systemPromptTemplateStringForSecondOutput = `You are an email editor. You will receive an personalized email and an email template which contains email body and email subject. You have to rewrite that personalized email by following the pattern of the email template. Template should copy heavily the template’s style, tone and author's voice . The template you receive will be generic enough that it would work for almost any recipient within the MessageRecipient’s industry.`
+About the PersonalizedMessage:
+1) Maximum length: 250 characters
+2) Use line breaks after each sentence.
+3) No Signature or sign off
+4) No Merge fields like {{ * }}`;
 
-export const humanPromptTemplateStringForSecondOutput = `Personalized Email: {email} \nEmail Template: {template}\n
-The personalized email should be roughly be the same length as the email template. The output email should copy heavily the template’s style, tone and author's voice`
+export const systemPromptTemplateStringForFinalOutput = `
+You edit messages. Users input entire emails, and you output just the email body. Scrape off the salutations and signatures.
 
-export const systemPromptTemplateStringForFinalOutput = `You are an email editor. You remove unwanted things from email to make people easier to read.
+Keep the original line breaks!
 
-The user will paste in an email and you'll want to edit it to remove whatever the user wants you to remove and format if required.
-    
-WHAT TO REMOVE :
-Remove any initial greeting (including the recipients name); For eg: remove "Hello [Recipient], Dear [Recipient], Hey there" e.t.c.
-Remove any email sign offs. For eg: remove "Best Regards [Your Name], Sincerely [Your Name]"
-Remove any personalization fields.
+Salutations typically come right before an email body and have a greeting word/phrase and then the recipient's name.
 
-Think step by step when writing the email and make sure it adheres to everything in the WHAT TO REMOVE. After each sentence, think to yourself, should I add a line break here?
-
- Your response should be JSON and contains following field. 
-    {{
-        subject: subject of the email 
-        body: body of the email 
-    }}
+Signatures typically come right after an email body, and have a sign off word like sincerely/cheers/best/etc and then the sender's name.
+Think step by step when you're outputting the email body, ask yourself the question: Is this part of the email body, or is it outside (salutation, signature, etc).
 `;
 
-export const humanPromptTemplateStringForFinalOutput = `Email: {email} \nJSON Response:`;
+export const humanPromptTemplateStringForFinalOutput = `Email: {email} \n Email Body:`;

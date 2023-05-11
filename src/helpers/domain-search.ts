@@ -7,7 +7,7 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, name: campaignName } = campaign;
+    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -48,7 +48,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
     if (!contactEmails?.length) {
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
             error: true,
-            errorReason: "0 emails found for given position"
+            errorReason: "0 emails found"
         });
         return;
     }
@@ -67,26 +67,26 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         const emailBodies: string[] = [];
         const emailSubjects: string[] = [];
         for (const template of templates) {
-            const response = await writeSubjectAndBodyOfEmail({
+            const emailBody = await writeSubjectAndBodyOfEmail({
                 template,
                 senderInformation,
-                name: contactEmail["firstName"],
-                designation: contactEmail["position"],
-                businessName: contactEmail["companyName"],
-                businessInfo: JSON.stringify(info),
-                businessDomain: url,
+                recipientInformation: {
+                    recipientBusinessDomainURL: url,
+                    recipientBusinessSummary: info,
+                    recipientEmail: contactEmail["email"],
+                    recipientDesignation: contactEmail["position"]
+                },
                 objective,
                 includeDetails,
                 openAIApiKey: openAIIntegration.accessToken
             });
 
-            const { subject, body } = JSON.parse(response);
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                emailSubject: subject,
-                emailBody: body
+                emailSubject: "",
+                emailBody: emailBody
             });
-            emailBodies.push(body);
-            emailSubjects.push(subject);
+            emailBodies.push(emailBody);
+            emailSubjects.push("");
         }
 
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
@@ -103,11 +103,10 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 rightOLastName: contactEmail["lastName"],
             };
             for (let i = 0; i < emailBodies.length; i++) {
-                const emailBody = emailBodies[i];
-                const emailSubject = emailSubjects[i];
-                if (emailBody && emailSubject) {
-                    rightOBody[`rightOEmailBody-${campaignName.replace(/\s\s+/g, '-')}-${i + 1}`] = emailBody;
-                    rightOBody[`rightOEmailSubject-${i + 1}`] = emailSubject;
+                const emailBody = emailBodies[i]?.replace("\n", "{{icebreaker}}");
+                if (emailBody) {
+                    rightOBody[`rightOEmailSubject`] = "";
+                    rightOBody["icebreaker"] = emailBody;
                 }
             }
 
