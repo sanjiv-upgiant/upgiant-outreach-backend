@@ -103,7 +103,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 rightOLastName: contactEmail["lastName"],
             };
             for (let i = 0; i < emailBodies.length; i++) {
-                const emailBody = emailBodies[i]?.replace("\n", "{{icebreaker}}");
+                const emailBody = emailBodies[i];
                 if (emailBody) {
                     rightOBody[`rightOEmailSubject`] = "";
                     rightOBody["icebreaker"] = emailBody;
