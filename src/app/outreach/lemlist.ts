@@ -27,11 +27,10 @@ export const getCampaignsFromLemlist = async (accessToken: string, offset = "") 
     return response.data
 }
 
-export const addLemlistWebHookForGivenCampaign = async (campaignId: string, accessToken: string) => {
+export const addLemlistWebHookForGivenCampaign = async (accessToken: string) => {
     try {
         const url = `https://api.lemlist.com/api/hooks?access_token=${accessToken}`;
         const response = await axios.post(url, {
-            campaignId,
             targetUrl: PROD_BACKEND_URL + "/lemlist-hooks",
             isFirst: true
         }, {
@@ -43,5 +42,6 @@ export const addLemlistWebHookForGivenCampaign = async (campaignId: string, acce
     }
     catch (err) {
         logger.error("lemlist adding webhook error", err);
+        return null;
     }
 }

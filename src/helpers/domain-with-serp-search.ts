@@ -1,7 +1,6 @@
 
-import { JobId } from "bull";
 import { cacheEmailsFinder, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIOEmailSearch } from "./../app/email-search/snovio";
-import { addLeadToCampaignUsingLemlist, addLemlistWebHookForGivenCampaign } from "./../app/outreach/lemlist";
+import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { cacheSerpApiResponseWithQuery, parseSerpResponse } from "./../app/serp/serpapi";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
@@ -10,7 +9,7 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 
-export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc, jobId: JobId) => {
+export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
     const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
@@ -124,8 +123,5 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
         }
     }
 
-    if (jobId == "1") {
-        await addLemlistWebHookForGivenCampaign(emailSearchServiceCampaignId, outreachIntegration.accessToken);
-    }
 }
 

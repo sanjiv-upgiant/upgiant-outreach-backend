@@ -1,10 +1,20 @@
 
+import IntegrationModel from '../integrations/integration.model';
+import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
 import getCampaignQueue from './../../crawler/queue';
 import { CampaignUrlModel } from './Url.model';
 import { ICampaign } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
 
 export const createCampaign = async (campaign: ICampaign, user: string) => {
+    const integration = await IntegrationModel.findById(campaign.outreachAgentId);
+    if (integration && !integration?.meta?.["webhookAdded"]) {
+        const result = await addLemlistWebHookForGivenCampaign(integration?.accessToken ?? "");
+        if (result) {
+            integration.meta = { ...(integration.meta || {}), webhookAdded: true };
+            await integration.save()
+        }
+    }
     return CampaignModel.create({ ...campaign, user });
 }
 
