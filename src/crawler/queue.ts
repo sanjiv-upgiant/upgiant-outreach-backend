@@ -11,8 +11,6 @@ import { extractTitleAndText } from './../modules/utils/url';
 import scrape from './scraper';
 
 
-
-
 const getCampaignQueue = (queueId: string) => {
     const scrapeQueue = new Queue(queueId, { redis: { port: 6379, host: '127.0.0.1' } });
     scrapeQueue.on('completed', (job) => {
@@ -97,10 +95,10 @@ const getCampaignQueue = (queueId: string) => {
         }
 
         if (searchType === SearchType.DOMAINS) {
-            await searchWithDomain(campaignJson, urlFromDatabase);
+            await searchWithDomain(campaignJson, urlFromDatabase, job.id);
         }
         else if (searchType === SearchType.DOMAINS_WITH_SERP) {
-            await searchWithSerpAndDomain(campaignJson, urlFromDatabase);
+            await searchWithSerpAndDomain(campaignJson, urlFromDatabase, job.id);
         }
 
     });

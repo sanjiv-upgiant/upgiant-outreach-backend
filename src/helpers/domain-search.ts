@@ -1,28 +1,19 @@
+import { JobId } from "bull";
 import { getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch } from "./../app/email-search/snovio";
-import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
+import { addLeadToCampaignUsingLemlist, addLemlistWebHookForGivenCampaign } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 
-export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
+export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc, jobId: JobId) => {
     const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
-    if (!openAIIntegration) {
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            error: true,
-            errorReason: "No openai integration found. Please add OpenAI access token"
-        });
-        return;
-    }
-    if (!emailSearchIntegration) {
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            error: true,
-            errorReason: "No email search integration found. Please add one of email integration service."
-        });
+    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+    if (!emailSearchIntegration || !outreachIntegration || !openAIIntegration) {
         return;
     }
     const positions: string[] = [];
@@ -57,11 +48,6 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         emailExtracted: true,
         contactEmails
     });
-
-    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-    if (!outreachIntegration) {
-        return;
-    }
 
     for (const contactEmail of contactEmails) {
         const emailBodies: string[] = [];
@@ -117,6 +103,10 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             });
         }
         break;
+    }
+
+    if (jobId == "1") {
+        await addLemlistWebHookForGivenCampaign(emailSearchServiceCampaignId, outreachIntegration.accessToken);
     }
 }
 

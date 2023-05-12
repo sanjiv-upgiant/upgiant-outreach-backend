@@ -1,6 +1,7 @@
 
+import { JobId } from "bull";
 import { cacheEmailsFinder, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIOEmailSearch } from "./../app/email-search/snovio";
-import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
+import { addLeadToCampaignUsingLemlist, addLemlistWebHookForGivenCampaign } from "./../app/outreach/lemlist";
 import { cacheSerpApiResponseWithQuery, parseSerpResponse } from "./../app/serp/serpapi";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
@@ -9,22 +10,18 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 
-export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
+export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc, jobId: JobId) => {
     const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
-    if (!serpApiIntegration) {
-        return;
-    }
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
-    if (!serpApiIntegration || !openAIIntegration) {
 
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            error: true,
-            errorReason: "No openai integration/SERP found. Please add required access tokens"
-        });
+    const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
+    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+    if (!emailSearchIntegration || !outreachIntegration || !serpApiIntegration || !openAIIntegration) {
         return;
     }
+
     const [query, response] = await cacheSerpApiResponseWithQuery({
         integration: serpApiIntegration.id,
         domain: url,
@@ -36,16 +33,8 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
     const employeesInformationString = await extractEmployeesInformationFromSerp(openAIIntegration.accessToken, query, results);
     const employessInformationJson: { firstName: string, lastName: string, position: string }[] = JSON.parse(employeesInformationString) || [];
 
+
     for (const employee of employessInformationJson) {
-        // we now need to use email finder
-        const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
-        if (!emailSearchIntegration) {
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                error: true,
-                errorReason: "No email search integration found. Please add one of email integration service."
-            });
-            return;
-        }
 
         let contactEmails: {
             firstName: string,
@@ -72,10 +61,6 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             });
         }
         else {
-            const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-            if (!outreachIntegration) {
-                return;
-            }
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 emailExtracted: true,
                 contactEmails
@@ -137,6 +122,10 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             }
             break;
         }
+    }
+
+    if (jobId == "1") {
+        await addLemlistWebHookForGivenCampaign(emailSearchServiceCampaignId, outreachIntegration.accessToken);
     }
 }
 
