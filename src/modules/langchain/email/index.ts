@@ -23,7 +23,7 @@ interface IRecipientInformation {
     recipientBusinessDomainURL: string,
     recipientBusinessSummary: string,
     recipientBusinessName?: string,
-    recipientDesignation?: string,
+    recipientDesignation?: string | undefined,
     recipientName?: string,
 }
 
@@ -34,13 +34,14 @@ interface IEmailCampaignArgs {
     recipientInformation: IRecipientInformation,
     objective?: string,
     includeDetails?: string,
+    gptModelTemperature?: number,
 }
 
 
-export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", objective = "To write personalized email", recipientInformation }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", objective = "To write personalized email", recipientInformation, gptModelTemperature = 0 }: IEmailCampaignArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
-    const chat = new ChatOpenAI({ temperature: 0, openAIApiKey });
+    const chat = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
@@ -51,7 +52,7 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
     const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate });
 
 
-    const chat2 = new ChatOpenAI({ temperature: 0, openAIApiKey });
+    const chat2 = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
 
     const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
     const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);

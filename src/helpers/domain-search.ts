@@ -1,3 +1,4 @@
+import { getCachedBulkEmailSearchFromApollo, parseEmailsFromApolloEmailSearch } from "./../app/email-search/apollo";
 import { getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
@@ -6,8 +7,16 @@ import { IntegrationTypes } from "./../modules/integrations/integration.interfac
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 
+export interface IContactEmail {
+    email: string,
+    firstName?: string,
+    lastName?: string,
+    position?: string
+    companyName?: string,
+}
+
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
+    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
     const { url, info } = websiteUrlInfo;
     const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -20,19 +29,23 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         positions.push(audienceFilters.position);
     }
 
-    let contactEmails: {
-        firstName: string,
-        lastName: string,
-        email: string,
-        position: string
-        companyName: string,
-    }[] = [];
+    let contactEmails: IContactEmail[] = [];
 
     if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
         const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
 
         const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegration.id, accessToken, url, positions);
         contactEmails = parseEmailsFromSnovIODomainSearch(domainSearchWithResults);
+    }
+
+    else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
+        const apolloBulkEmailSearch = await getCachedBulkEmailSearchFromApollo({
+            integrationId: emailSearchIntegration.id,
+            url,
+            positions,
+            accessToken: emailSearchIntegration.accessToken
+        });
+        contactEmails = parseEmailsFromApolloEmailSearch(apolloBulkEmailSearch);
     }
 
     if (!contactEmails?.length) {
@@ -63,7 +76,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 },
                 objective,
                 includeDetails,
-                openAIApiKey: openAIIntegration.accessToken
+                openAIApiKey: openAIIntegration.accessToken,
+                gptModelTemperature
             });
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
@@ -82,10 +96,10 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
             const { accessToken } = outreachIntegration;
             const rightOBody: { [x: string]: string } = {
-                rightOCompanyName: contactEmail["companyName"],
-                rightODesignation: contactEmail["position"],
-                rightOFirstName: contactEmail["firstName"],
-                rightOLastName: contactEmail["lastName"],
+                rightOCompanyName: contactEmail["companyName"] ?? "",
+                rightODesignation: contactEmail["position"] ?? "",
+                rightOFirstName: contactEmail["firstName"] ?? "",
+                rightOLastName: contactEmail["lastName"] ?? "",
             };
             for (let i = 0; i < emailBodies.length; i++) {
                 const emailBody = emailBodies[i];
@@ -104,6 +118,22 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         break;
     }
 }
+
+// (async () => {
+//     const emailSearchIntegration = await IntegrationModel.findById("645fbfee3b26e3133727c19b");
+//     if (!emailSearchIntegration) {
+//         return;
+//     }
+//     const url = "https://astrologyanswers.com";
+//     const positions: string[] = [];
+//     const res = await getCachedBulkEmailSearchFromApollo({
+//         integrationId: emailSearchIntegration.id,
+//         url,
+//         positions,
+//         accessToken: emailSearchIntegration.accessToken
+//     });
+//     console.log(res);
+// })()
 
 // addLemlistWebHookForGivenCampaign("cam_4mZJv5ZhJxveftjZT", "68dcf53be8461049e55ab2c3ed3e1fe5")
 

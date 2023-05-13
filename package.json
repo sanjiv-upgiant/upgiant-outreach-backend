@@ -132,6 +132,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "querystring": "^0.2.1",
+    "react-icons": "^4.8.0",
     "redis": "^4.6.5",
     "serpapi": "^1.1.1",
     "stripe": "^12.4.0",

@@ -10,7 +10,6 @@ import { cleanupAllAxiosInstances } from './../modules/limitedAxios';
 import { extractTitleAndText } from './../modules/utils/url';
 import scrape from './scraper';
 
-
 const getCampaignQueue = (queueId: string) => {
     const scrapeQueue = new Queue(queueId, { redis: { port: 6379, host: '127.0.0.1' } });
     scrapeQueue.on('completed', (job) => {
@@ -91,7 +90,7 @@ const getCampaignQueue = (queueId: string) => {
             await UrlModel.findOneAndUpdate({ url }, {
                 info,
                 status: UrlStatus.SUMMARY_EXTRACTED
-            }, { upsert: true });
+            });
         }
 
         if (searchType === SearchType.DOMAINS) {

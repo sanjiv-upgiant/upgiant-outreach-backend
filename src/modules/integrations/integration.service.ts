@@ -4,6 +4,7 @@ import { testOpenAI } from "./../../app/openai";
 import { getCampaignsFromLemlist, getLemlistTeam } from "./../../app/outreach/lemlist";
 import { IIntegration, IntegrationTypes } from "./integration.interfaces";
 import IntegrationModel from "./integration.model";
+import { getApolloHealth } from "./../../app/email-search/apollo";
 
 export const getCampaignList = async (integrationId: string, user: string, offset = "") => {
     const integration = await IntegrationModel.findOne({ _id: integrationId, user });
@@ -22,6 +23,9 @@ export const addNewIntegration = async (integration: IIntegration, user: string)
     }
     else if (integration.type === IntegrationTypes.OPENAI) {
         await testOpenAI(integration.accessToken);
+    }
+    else if (integration.type === IntegrationTypes.APOLLO) {
+        await getApolloHealth(integration.accessToken);
     }
     else if (integration.type === IntegrationTypes.SERPAPI) {
         const res = await getJson("google", { q: `Hello World!`, api_key: integration.accessToken });

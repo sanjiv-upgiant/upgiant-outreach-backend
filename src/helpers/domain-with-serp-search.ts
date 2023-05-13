@@ -10,7 +10,7 @@ import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates } = campaign;
+    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -70,6 +70,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 const emailSubjects: string[] = [];
                 for (const template of templates) {
                     const emailBody = await writeSubjectAndBodyOfEmail({
+                        gptModelTemperature,
                         template,
                         senderInformation,
                         recipientInformation: {

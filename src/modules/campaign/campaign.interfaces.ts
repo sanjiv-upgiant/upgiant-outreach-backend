@@ -37,6 +37,7 @@ export interface ICampaign {
     status: CampaignStatus,
     modelName: string,
     objective: string;
+    gptModelTemperature?: number,
     audienceFilters: {
         seniority: string,
         position: string,

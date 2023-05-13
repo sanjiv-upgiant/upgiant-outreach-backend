@@ -19,7 +19,7 @@ export const addIntegrationController = catchAsync(async (req: Request, res: Res
 export const getIntegrationsController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const integrations = await getUserIntegrations(user);
-    res.status(httpStatus.CREATED).send(integrations);
+    res.status(httpStatus.OK).send(integrations);
 });
 
 export const deleteIntegrationController = catchAsync(async (req: Request, res: Response) => {

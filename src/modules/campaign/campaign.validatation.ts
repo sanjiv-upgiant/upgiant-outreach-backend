@@ -4,7 +4,7 @@ import { SearchType } from './campaign.interfaces';
 export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
-        urls: Joi.array().items(Joi.string().uri().required()).required(),
+        urls: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
         modelName: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
@@ -27,6 +27,7 @@ export const createCampaignValidation = {
             otherwise: Joi.string().allow(null),
         }),
         includeDetails: Joi.string().optional(),
+        gptModelTemperature: Joi.number().min(0).max(1).optional().default(0),
         senderInformation: Joi.object().keys({
             sendersName: Joi.string().required(),
             sendersCompanyBusinessSummary: Joi.string().required(),

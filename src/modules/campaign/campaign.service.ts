@@ -1,7 +1,6 @@
 
 import IntegrationModel from '../integrations/integration.model';
 import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
-import getCampaignQueue from './../../crawler/queue';
 import { CampaignUrlModel } from './Url.model';
 import { ICampaign } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
@@ -21,25 +20,15 @@ export const createCampaign = async (campaign: ICampaign, user: string) => {
 
 export const getUserCampaigns = async (user: string, page: string, limit: string) => {
     const pageInt = parseInt(page);
-    const limitInt = parseInt(limit);
+    const limitInt = parseInt(limit) || 10;
     const totalResults = await CampaignModel.countDocuments({ user });
     const campaigns = await CampaignModel.find({ user }).sort({ "_id": -1 })
         .skip((pageInt - 1) * limitInt)
-        .limit(limitInt || limitInt);
+        .limit(limitInt);
 
-    const campaignsData: { campaign: ICampaign, jobStatus: any }[] = [];
-
-    for (const campaign of campaigns) {
-        const queue = getCampaignQueue(campaign.id);
-        const jobStatus = await queue.getJobCounts();
-        campaignsData.push({
-            ...campaign.toJSON(),
-            jobStatus
-        })
-    }
 
     return {
-        data: campaignsData,
+        data: campaigns,
         totalResults,
         resultsPerPage: limitInt,
         currentPage: pageInt

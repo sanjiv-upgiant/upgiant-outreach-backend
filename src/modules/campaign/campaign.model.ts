@@ -14,8 +14,13 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: String,
             required: true,
         },
+        gptModelTemperature: {
+            type: Number,
+            default: 0
+        },
         modelName: {
             type: String,
+            default: "gpt-3.5-turbo"
         },
         runStatus: {
             type: String,
