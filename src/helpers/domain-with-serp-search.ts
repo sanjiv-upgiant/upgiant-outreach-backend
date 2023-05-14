@@ -1,4 +1,5 @@
 
+import { getCachedEmailFinderFromApollo, parseEmailsFromApolloEmailFinder } from "./../app/email-search/apollo";
 import { cacheEmailsFinder, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIOEmailSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { cacheSerpApiResponseWithQuery, parseSerpResponse } from "./../app/serp/serpapi";
@@ -8,6 +9,12 @@ import { IntegrationTypes } from "./../modules/integrations/integration.interfac
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
+
+export interface IEmailFinderSearchResponse {
+    firstName: string,
+    lastName: string,
+    emails: { email: string, emailStatus: string }[],
+}
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
     const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
@@ -35,11 +42,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
 
     for (const employee of employessInformationJson) {
 
-        let contactEmails: {
-            firstName: string,
-            lastName: string,
-            emails: { email: string, emailStatus: string }[],
-        } = {
+        let contactEmails: IEmailFinderSearchResponse = {
             firstName: "",
             lastName: "",
             emails: []
@@ -51,6 +54,16 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, employee.firstName, employee.lastName, url);
 
             contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
+        }
+        else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
+            const employeeEmails = await getCachedEmailFinderFromApollo({
+                firstName: employee["firstName"],
+                lastName: employee["lastName"],
+                domain: url,
+                accessToken: emailSearchIntegration.accessToken,
+                integrationId: emailSearchIntegration.id
+            });
+            contactEmails = parseEmailsFromApolloEmailFinder(employeeEmails);
         }
 
         if (!contactEmails?.emails?.length) {

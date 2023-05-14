@@ -1,9 +1,9 @@
 import axios from "axios";
 import { stringify } from "querystring";
-import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
-import redisClient from '../../redis';
 import { CACHE_TTL } from "../../constants";
+import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
 import { getAxiosInstance } from "../../modules/limitedAxios";
+import redisClient from '../../redis';
 
 const client = redisClient.client;
 
@@ -102,7 +102,7 @@ export const cacheEmailsFinder = async (integration: string, accessToken: string
     const key = firstName + '|' + lastName + '|' + domain;
 
     const cachedResult = await IntegrationOutputModel.findOne({ key });
-    if (cachedResult && (Date.now() - cachedResult.updatedAt.getTime()) / 1000 < CACHE_TTL) {
+    if (cachedResult) {
         return cachedResult.result;
     }
 
