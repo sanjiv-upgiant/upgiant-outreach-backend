@@ -79,11 +79,13 @@ export const parseEmailsFromApolloEmailSearch = (data: any = {}): IContactEmail[
         const lastName = people["last_name"];
         const email = people["email"];
         const position = people["seniority"];
+        const companyName = people["organization"]?.["name"] || "";
         response.push({
             firstName,
             lastName,
             email,
-            position
+            position,
+            companyName
         })
     }
     return response;

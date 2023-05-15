@@ -75,3 +75,7 @@ Think step by step when you're outputting the email body, ask yourself the quest
 `;
 
 export const humanPromptTemplateStringForFinalOutput = `Email: {email} \n Email Body:`;
+
+export const systemPromptTemplateStringForFinalOutputAgain = `You will be given an email and your job is to remove salutations and signatures from it if present. If the email only contains email body, return whatever is passed to you, else return email body without signature and salutations`;
+
+export const humanPromptTemplateStringForFinalOutputAgain = `Email: {email} \n Email Body:`;

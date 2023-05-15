@@ -7,7 +7,7 @@ import {
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
+import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForFinalOutputAgain, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForFinalOutputAgain, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
 
 
 interface ISenderInformation {
@@ -51,13 +51,19 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
 
     const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate });
 
-
     const chat2 = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
 
     const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
     const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);
     const chatPromptTemplateForFinal = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForFinal, humanPromptTemplateForFinal]);
     const finalEmailChain = new LLMChain({ llm: chat2, prompt: chatPromptTemplateForFinal })
+
+    const chat3 = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
+
+    const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutputAgain);
+    const humanPromptTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutputAgain);
+    const chatPromptTemplateForFinalAgain = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForAnotherFinal, humanPromptTemplateForAnotherFinal]);
+    const finalEmailChainAgain = new LLMChain({ llm: chat3, prompt: chatPromptTemplateForFinalAgain });
 
     // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
     const initialResponse = await initialEmailChain.predict({
@@ -81,7 +87,11 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
         email: initialResponse
     })
 
-    return finalResponse;
+    const finalResponseAgain = await finalEmailChainAgain.predict({
+        email: finalResponse
+    })
+
+    return finalResponseAgain;
 };
 
 
