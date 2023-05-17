@@ -1,4 +1,5 @@
 
+import { getCacheEmailsFinderFromHunter, parseEmailsFromHunterEmailFinder } from "./../app/email-search/hunter";
 import { getCachedEmailFinderFromApollo, parseEmailsFromApolloEmailFinder } from "./../app/email-search/apollo";
 import { cacheEmailsFinder, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIOEmailSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
@@ -65,6 +66,17 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             });
             contactEmails = parseEmailsFromApolloEmailFinder(employeeEmails);
         }
+        else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
+            const employeeEmails = await getCacheEmailsFinderFromHunter({
+                firstName: employee["firstName"],
+                lastName: employee["lastName"],
+                domain: url,
+                accessToken: emailSearchIntegration.accessToken,
+                integrationId: emailSearchIntegration.id
+            });
+            contactEmails = parseEmailsFromHunterEmailFinder(employeeEmails);
+        }
+
 
         if (!contactEmails?.emails?.length) {
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {

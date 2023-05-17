@@ -5,6 +5,7 @@ import { getCampaignsFromLemlist, getLemlistTeam } from "./../../app/outreach/le
 import { IIntegration, IntegrationTypes } from "./integration.interfaces";
 import IntegrationModel from "./integration.model";
 import { getApolloHealth } from "./../../app/email-search/apollo";
+import { testHunterApi } from "./../../app/email-search/hunter";
 
 export const getCampaignList = async (integrationId: string, user: string, offset = "") => {
     const integration = await IntegrationModel.findOne({ _id: integrationId, user });
@@ -23,6 +24,9 @@ export const addNewIntegration = async (integration: IIntegration, user: string)
     }
     else if (integration.type === IntegrationTypes.OPENAI) {
         await testOpenAI(integration.accessToken);
+    }
+    else if (integration.type === IntegrationTypes.HUNTER) {
+        await testHunterApi(integration.accessToken);
     }
     else if (integration.type === IntegrationTypes.APOLLO) {
         await getApolloHealth(integration.accessToken);

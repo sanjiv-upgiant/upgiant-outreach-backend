@@ -1,3 +1,4 @@
+import { parseEmailsFromHunterDomainSearch, getCacheDomainSearchedEmailsFromHunter } from './../app/email-search/hunter';
 import { getCachedBulkEmailSearchFromApollo, parseEmailsFromApolloEmailSearch } from "./../app/email-search/apollo";
 import { getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
@@ -46,6 +47,17 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             accessToken: emailSearchIntegration.accessToken
         });
         contactEmails = parseEmailsFromApolloEmailSearch(apolloBulkEmailSearch);
+    }
+
+    else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
+        const hunterEmailSearchFromDomain = await getCacheDomainSearchedEmailsFromHunter({
+            integrationId: emailSearchIntegration.id,
+            domain: url,
+            seniority: audienceFilters.seniority,
+            department: audienceFilters.department,
+            accessToken: emailSearchIntegration.accessToken
+        });
+        contactEmails = parseEmailsFromHunterDomainSearch(hunterEmailSearchFromDomain);
     }
 
     if (!contactEmails?.length) {
