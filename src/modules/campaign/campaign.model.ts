@@ -45,7 +45,7 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         objective: String,
         audienceFilters: {
             seniority: String,
-            position: String,
+            positions: [String],
             department: String,
         },
         searchType: {
@@ -53,8 +53,8 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             enum: SearchType,
             default: SearchType.DOMAINS
         },
-        emailSearchServiceId: {
-            type: String,
+        emailSearchServiceIds: {
+            type: [String],
             required: true
         },
         emailSearchServiceCampaignId: {
@@ -77,7 +77,10 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             required: true
         },
         templates: {
-            type: [String],
+            type: [{
+                subject: String,
+                body: String,
+            }],
             required: true
         },
         emailsSent: {

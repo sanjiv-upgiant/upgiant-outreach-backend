@@ -8,6 +8,7 @@ import {
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForFinalOutputAgain, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForFinalOutputAgain, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
+import { ICampaign } from "./../../../modules/campaign/campaign.interfaces";
 
 
 interface ISenderInformation {
@@ -28,7 +29,7 @@ interface IRecipientInformation {
 }
 
 interface IEmailCampaignArgs {
-    template: string,
+    template: ICampaign["templates"][0],
     openAIApiKey: string,
     senderInformation: ISenderInformation,
     recipientInformation: IRecipientInformation,
@@ -67,7 +68,7 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
 
     // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
     const initialResponse = await initialEmailChain.predict({
-        template,
+        template: `Email Subject: ${template.subject} \n Email Body:${template.body}`,
         recipientEmail,
         recipientBusinessDomainURL,
         recipientBusinessSummary,

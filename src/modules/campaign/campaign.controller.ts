@@ -49,8 +49,8 @@ export const getUserSingleCampaignController = catchAsync(async (req: Request, r
 export const getSingleCampaignUrlsController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const campaignId = req.params["id"] || "";
-    const { page = "1" } = req.query as { page?: string };
-    const userCampaign = await getSingleCampaignUrls(user, campaignId, page, limit);
+    const { page = "1", filter = "" } = req.query as { page?: string, filter?: string };
+    const userCampaign = await getSingleCampaignUrls(user, campaignId, page, limit, filter);
     res.status(httpStatus.OK).send(userCampaign);
 });
 

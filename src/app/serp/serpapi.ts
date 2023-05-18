@@ -6,16 +6,16 @@ interface SerpResponse {
     integration: string,
     accessToken: string,
     domain: string;
-    position?: string;
+    positions?: string[];
     title?: string;
     department?: string
 }
 
 const getSerpQuery = (params: Omit<SerpResponse, "accessToken">) => {
-    const { domain, position, title, department } = params;
+    const { domain, positions, title, department } = params;
     let query = `${domain} linkedin `;
-    if (position) {
-        query += position + " ";
+    if (positions?.length) {
+        query += positions[0] + " ";
     }
     if (title) {
         query += title + " ";
@@ -37,7 +37,7 @@ const getQueryAndSerpApiResponse = async (params: SerpResponse) => {
 export const cacheSerpApiResponseWithQuery = async (params: SerpResponse) => {
     const domain = params.domain ? `${params.domain} | ` : '';
     const department = params.department ? `${params.department} | ` : '';
-    const position = params.position ? `${params.position} | ` : '';
+    const position = params.positions?.length ? `${params.positions[0]} | ` : '';
     const title = params.title ? params.title : '';
 
     const key = `${domain}${department}${position}${title}`;

@@ -10,9 +10,9 @@ const router = Router();
 
 router.post("/create", auth(), validate(createCampaignValidation), createCampaignController)
 router.get("/", auth(), getUserCampaignsController)
-router.get("/:id", auth(), getUserSingleCampaignController)
 router.delete("/:id", auth(), deleteUserCampaignController)
 router.get("/:id/urls", auth(), getSingleCampaignUrlsController)
+router.get("/:id", auth(), getUserSingleCampaignController)
 router.put("/:id/", auth(), editCampaignController)
 
 export default router;

@@ -1,7 +1,4 @@
 
-import { getCacheEmailsFinderFromHunter, parseEmailsFromHunterEmailFinder } from "./../app/email-search/hunter";
-import { getCachedEmailFinderFromApollo, parseEmailsFromApolloEmailFinder } from "./../app/email-search/apollo";
-import { cacheEmailsFinder, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIOEmailSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { cacheSerpApiResponseWithQuery, parseSerpResponse } from "./../app/serp/serpapi";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
@@ -10,6 +7,7 @@ import { IntegrationTypes } from "./../modules/integrations/integration.interfac
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
+import { getEmailFromFirstNameAndLastNameServices } from "./emailFinder";
 
 export interface IEmailFinderSearchResponse {
     firstName: string,
@@ -18,14 +16,13 @@ export interface IEmailFinderSearchResponse {
 }
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceId, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
+    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
 
-    const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-    if (!emailSearchIntegration || !outreachIntegration || !serpApiIntegration || !openAIIntegration) {
+    if (!outreachIntegration || !serpApiIntegration || !openAIIntegration) {
         return;
     }
 
@@ -33,7 +30,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
         integration: serpApiIntegration.id,
         domain: url,
         accessToken: serpApiIntegration.accessToken,
-        position: audienceFilters.position,
+        positions: audienceFilters.positions,
         department: audienceFilters.department
     });
     const results = parseSerpResponse(response);
@@ -43,40 +40,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
 
     for (const employee of employessInformationJson) {
 
-        let contactEmails: IEmailFinderSearchResponse = {
-            firstName: "",
-            lastName: "",
-            emails: []
-        };
-
-        if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
-            const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
-
-            const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, employee.firstName, employee.lastName, url);
-
-            contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
-        }
-        else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
-            const employeeEmails = await getCachedEmailFinderFromApollo({
-                firstName: employee["firstName"],
-                lastName: employee["lastName"],
-                domain: url,
-                accessToken: emailSearchIntegration.accessToken,
-                integrationId: emailSearchIntegration.id
-            });
-            contactEmails = parseEmailsFromApolloEmailFinder(employeeEmails);
-        }
-        else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
-            const employeeEmails = await getCacheEmailsFinderFromHunter({
-                firstName: employee["firstName"],
-                lastName: employee["lastName"],
-                domain: url,
-                accessToken: emailSearchIntegration.accessToken,
-                integrationId: emailSearchIntegration.id
-            });
-            contactEmails = parseEmailsFromHunterEmailFinder(employeeEmails);
-        }
-
+        const contactEmails = await getEmailFromFirstNameAndLastNameServices({ integrationIds: emailSearchServiceIds, url, firstName: employee["firstName"], lastName: employee["lastName"] });
 
         if (!contactEmails?.emails?.length) {
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {

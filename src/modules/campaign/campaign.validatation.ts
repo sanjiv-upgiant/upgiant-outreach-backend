@@ -8,7 +8,9 @@ export const createCampaignValidation = {
         modelName: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
-            position: Joi.string().optional().allow(""),
+            positions: Joi.array()
+                .items(Joi.string().optional())
+                .optional(),
             seniority: Joi.string().optional().allow(""),
             department: Joi.string().optional().allow(""),
         }).required(),
@@ -17,7 +19,9 @@ export const createCampaignValidation = {
             SearchType.DOMAINS,
             SearchType.DOMAINS_WITH_SERP
         ).required(),
-        emailSearchServiceId: Joi.string().required(),
+        emailSearchServiceIds: Joi.array()
+            .items(Joi.string())
+            .required(),
         emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),
@@ -36,7 +40,10 @@ export const createCampaignValidation = {
             sendersProductService: Joi.string().optional().allow(""),
         }),
         templates: Joi.array()
-            .items(Joi.string())
-            .required()
+            .items(Joi.object().keys({
+                body: Joi.string().required(),
+                subject: Joi.string().required()
+            }))
+            .required().min(1)
     }),
 };

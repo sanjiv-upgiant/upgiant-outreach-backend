@@ -1,12 +1,10 @@
-import { parseEmailsFromHunterDomainSearch, getCacheDomainSearchedEmailsFromHunter } from './../app/email-search/hunter';
-import { getCachedBulkEmailSearchFromApollo, parseEmailsFromApolloEmailSearch } from "./../app/email-search/apollo";
-import { getCacheDomainSearchedEmails, getSnovioAccessTokenIfNeeded, parseEmailsFromSnovIODomainSearch } from "./../app/email-search/snovio";
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
+import { getEmailFromEmailFinderServices } from './emailFinder';
 
 export interface IContactEmail {
     email: string,
@@ -17,48 +15,15 @@ export interface IContactEmail {
 }
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceId, emailSearchServiceCampaignId, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
+    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
     const { url, info } = websiteUrlInfo;
-    const emailSearchIntegration = await IntegrationModel.findById(emailSearchServiceId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-    if (!emailSearchIntegration || !outreachIntegration || !openAIIntegration) {
+    if (!outreachIntegration || !openAIIntegration) {
         return;
     }
-    const positions: string[] = [];
-    if (audienceFilters.position) {
-        positions.push(audienceFilters.position);
-    }
 
-    let contactEmails: IContactEmail[] = [];
-
-    if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
-        const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
-
-        const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegration.id, accessToken, url, positions);
-        contactEmails = parseEmailsFromSnovIODomainSearch(domainSearchWithResults);
-    }
-
-    else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
-        const apolloBulkEmailSearch = await getCachedBulkEmailSearchFromApollo({
-            integrationId: emailSearchIntegration.id,
-            url,
-            positions,
-            accessToken: emailSearchIntegration.accessToken
-        });
-        contactEmails = parseEmailsFromApolloEmailSearch(apolloBulkEmailSearch);
-    }
-
-    else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
-        const hunterEmailSearchFromDomain = await getCacheDomainSearchedEmailsFromHunter({
-            integrationId: emailSearchIntegration.id,
-            domain: url,
-            seniority: audienceFilters.seniority,
-            department: audienceFilters.department,
-            accessToken: emailSearchIntegration.accessToken
-        });
-        contactEmails = parseEmailsFromHunterDomainSearch(hunterEmailSearchFromDomain);
-    }
+    const contactEmails = await getEmailFromEmailFinderServices({ integrationIds: emailSearchServiceIds, audienceFilters, url });
 
     if (!contactEmails?.length) {
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {

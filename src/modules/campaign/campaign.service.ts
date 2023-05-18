@@ -45,7 +45,7 @@ export const getUserSingleCampaign = async (user: string, _id: string) => {
     return CampaignModel.findOne({ user, _id });
 }
 
-export const getSingleCampaignUrls = async (user: string, _id: string, page: string, limit: string) => {
+export const getSingleCampaignUrls = async (user: string, _id: string, page: string, limit: string, filter: string) => {
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const campaign = await CampaignModel.findOne({ user, _id });
@@ -57,9 +57,20 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
             currentPage: 1
         };
     }
-    const totalResults = await CampaignUrlModel.countDocuments({ campaignId: campaign.id });
 
-    const urls = await CampaignUrlModel.find({ campaignId: campaign.id }).sort({ "_id": -1 })
+    const queryFilter: { [x: string]: boolean } = {};
+    if (filter === "complete") {
+        queryFilter["isCompleted"] = true;
+        queryFilter["emailExtracted"] = true;
+    }
+    else if (filter === "incomplete") {
+        queryFilter["emailExtracted"] = false;
+    }
+
+
+    const totalResults = await CampaignUrlModel.countDocuments({ campaignId: campaign.id, ...queryFilter });
+
+    const urls = await CampaignUrlModel.find({ campaignId: campaign.id, ...queryFilter }).sort({ "_id": -1 })
         .skip((pageInt - 1) * limitInt)
         .limit(limitInt || limitInt)
 
