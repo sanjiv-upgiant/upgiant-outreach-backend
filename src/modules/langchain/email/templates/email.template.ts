@@ -1,38 +1,42 @@
 
 export const systemPromptTemplateStringForInitialOutput = `
 You personalize outreach messages.
+You will be provided with the OriginalMessage, Recipient information, Sender information, and Other info.
 
-You will be provided with an OriginalMessage, info about the sender and info about the recipient. 
+FieldName: Required/optional & when to use.
++ + + + + + + + + + + + + + + +
 
-REQUIRED FIELDS, 
-you’ll always receive these fields:
+OriginalMessage: required, always populated and not empty
 
-1) OriginalMessage
-2) RecipientsEmail
-3) RecipientsCompanyDomainURL
-4) RecipientsCompanyBusinessSummary
-5) SendersName
-6) SendersEmail
-7) SendersCompanyDomainURL
-8) SendersCompanyBusinessSummary
+RecipientsCompanyDomainURL: required, always populated and not empty
+RecipientsCompanyName: required, always populated and not empty
+RecipientsCompanyBusinessSummary: required, always populated and not empty
 
-OPTIONAL FIELDS 
-that you’ll only sometimes get:
+RecipientsName: optional, value sometimes empty. If we have the Recipient's name, use their first name naturally to personalize the original message.
+RecipientsEmail: required, always populated and not empty
+RecipientsSeniority: optional, value sometimes empty; even if populated, think carefully when using it to personalize the original message and probably usually only do so if the original message refers to this.
+RecipientsDepartment: optional, value sometimes empty; even if populated, think carefully when using it to personalize the original message and probably usually only do so if the original message refers to this.
+RecipientsJobTitle: optional, value sometimes empty; even if populated, think carefully when using it to personalize the original message and probably usually only do so if the original message refers to this.
 
-** RecipientsName
-** RecipientsCompanyName
-** RecipientsSeniority
-** RecipientsDepartment
-** RecipientsJobTitle
-** SendersProductService
-** UserSalt
+SendersCompanyDomainURL: required, always populated and not empty
+SendersCompanyName: required, always populated and not empty
+SendersCompanyBusinessSummary: required, always populated and not empty
 
-+++++++++++++++++++++
-Your task is to write a close variant to the OriginalMessage called the PersonalizedMessage; this PersonalizedMessage should match the original messages structure, tone, style, length, substance, etc. - but it should also incorporate some of the required and optional information you were provided with; the end goal is to personalize the OriginalMessage with the new information.
+SendersName: required, always populated and not empty
+SendersEmail: required, always populated and not empty
 
-How long (characters/words) is the OriginalMessage?  
-The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+SendersProductService: optional, value sometimes empty; even if populated, think carefully when using it to personalize the original message and probably usually only do so if the original message refers to this.
+UserSalt: optional, value sometimes empty. If not empty, then consider whatever values/instructions are passed here as #1 priority and very important.
++ + + + + + + + + + + + + + + +
 
+Your task is to write a close variant to the OriginalMessage called the PersonalizedMessage; this PersonalizedMessage should match the original messages style, tone and structure.
+
+Style: What is the style of the OriginalMessage? The PersonalizedMessage should be roughly the same style as the OriginalMessage.
+Tone: What is the tone (attitude or emotion conveyed through words and phrases) of the OriginalMessage? The PersonalizedMessage should be roughly the same tone as the OriginalMessage.
+Voice: What is the voice of the OriginalMessage?  The PersonalizedMessage should have roughly the same voice as the OriginalMessage.
+Structure: How many sentences is the OriginalMessage, and what are the line breaks? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+Length: How long (characters/words) is the OriginalMessage? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+Emojis: Does the OriginalMessage make use of emojis? The PersonalizedMessage should use emojis too if the OriginalMessage used emojis.
 `
 
 export const humanPromptTemplateStringForInitialOutput = `Here's the details of the email.
@@ -47,23 +51,23 @@ SendersEmail: {sendersEmail}
 SenderCompanyDomainURL: {sendersCompanyDomainURL}
 SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
 
-+++++ OPTIONAL FIELDS +++++
 RecipientBusinessName: {recipientBusinessName}
 RecipientDesignation {recipientDesignation}
 RecipientName: {recipientName}  
 SendersProductService: {sendersProductService}
-EmailObjective: {objective}
 Include following Details for email: {includeDetails}
 
-++++++++++++++++++
 
 About the PersonalizedMessage:
-1) Maximum length: 250 characters
-2) Use line breaks after each sentence.
-3) No Signature or sign off
-4) No Merge fields like {{ * }}`;
+>> ONLY write the email body, no other part of the email
+>> Do NOT write an email Salutation
+>> Do NOT write an email Signature
+>> Don't include placeholder fields, or merge fields like {{ * }}
+>> Avoid using words that might be considered spammy or cause an email to get flagged for spam
+>> Do NOT write "PersonalizedMessage:" before the email body, just write the email body
+`;
 
-export const systemPromptTemplateStringForFinalOutput = `
+export const systemPromptTemplateStringForSecondPass = `
 You edit messages. Users input entire emails, and you output just the email body. Scrape off the salutations and signatures.
 
 Keep the original line breaks!
@@ -74,8 +78,6 @@ Signatures typically come right after an email body, and have a sign off word li
 Think step by step when you're outputting the email body, ask yourself the question: Is this part of the email body, or is it outside (salutation, signature, etc).
 `;
 
-export const humanPromptTemplateStringForFinalOutput = `Email: {email} \n Email Body:`;
+export const humanPromptTemplateStringForSecondPass = `Email: {email} \n Email Body:`;
 
-export const systemPromptTemplateStringForFinalOutputAgain = `You will be given an email and your job is to remove salutations and signatures from it if present. If the email only contains email body, return whatever is passed to you, else return email body without signature and salutations`;
-
-export const humanPromptTemplateStringForFinalOutputAgain = `Email: {email} \n Email Body:`;
+export const humanPromptTemplateStringForThirdPass = `Given the email response which may or may not contain body or signature, return only the email body and no other texts. If email already contains just the email body, return what is passed to you. Remember, no other texts other than email body. Here's the email: {email} \n Email Body:`;

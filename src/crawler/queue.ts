@@ -51,7 +51,7 @@ const getCampaignQueue = (queueId: string) => {
         let body = "";
         let status = UrlStatus.QUEUED;
         let urlFromDatabase = await UrlModel.findOne({ url });
-        if (urlFromDatabase?.title) {
+        if (urlFromDatabase?.status === UrlStatus.SUMMARY_EXTRACTED) {
             title = urlFromDatabase.title;
             body = urlFromDatabase.body;
             status = urlFromDatabase.status;

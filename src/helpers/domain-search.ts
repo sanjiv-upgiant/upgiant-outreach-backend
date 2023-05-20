@@ -15,7 +15,7 @@ export interface IContactEmail {
 }
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
+    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
     const { url, info } = websiteUrlInfo;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
@@ -54,7 +54,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 objective,
                 includeDetails,
                 openAIApiKey: openAIIntegration.accessToken,
-                gptModelTemperature
+                gptModelTemperature,
+                modelName
             });
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
@@ -97,19 +98,34 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 }
 
 // (async () => {
-//     const emailSearchIntegration = await IntegrationModel.findById("645fbfee3b26e3133727c19b");
-//     if (!emailSearchIntegration) {
+//     const campaign = await CampaignModel.findById("6468cbf69b33fbb7a5942fa1");
+//     const urlDoc = await UrlModel.findById("645921c3bc4333b9545fc505")
+//     if (!campaign || !urlDoc) {
 //         return;
 //     }
-//     const url = "https://astrologyanswers.com";
-//     const positions: string[] = [];
-//     const res = await getCachedBulkEmailSearchFromApollo({
-//         integrationId: emailSearchIntegration.id,
-//         url,
-//         positions,
-//         accessToken: emailSearchIntegration.accessToken
-//     });
-//     console.log(res);
+
+//     const { objective, includeDetails, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
+//     const { info } = urlDoc;
+
+//     for (const template of templates) {
+//         const res = await writeSubjectAndBodyOfEmail({
+//             template,
+//             senderInformation,
+//             recipientInformation: {
+//                 recipientBusinessDomainURL: "https://upgiant.com",
+//                 recipientBusinessSummary: info,
+//                 recipientEmail: "sanjiv@upgiant.com",
+//                 recipientDesignation: "CEO"
+//             },
+//             objective,
+//             includeDetails,
+//             openAIApiKey: "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",
+//             gptModelTemperature,
+//             modelName
+//         })
+//         console.log(res)
+
+//     }
 // })()
 
 // addLemlistWebHookForGivenCampaign("cam_4mZJv5ZhJxveftjZT", "68dcf53be8461049e55ab2c3ed3e1fe5")

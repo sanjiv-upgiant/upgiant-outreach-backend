@@ -16,7 +16,7 @@ export interface IEmailFinderSearchResponse {
 }
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0 } = campaign;
+    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
     const { url, info } = websiteUrlInfo;
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
@@ -59,6 +59,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 const emailSubjects: string[] = [];
                 for (const template of templates) {
                     const emailBody = await writeSubjectAndBodyOfEmail({
+                        modelName,
                         gptModelTemperature,
                         template,
                         senderInformation,

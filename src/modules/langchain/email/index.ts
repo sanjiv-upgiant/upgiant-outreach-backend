@@ -3,12 +3,13 @@
 import { LLMChain } from "langchain/chains";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
+    AIMessagePromptTemplate,
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { humanPromptTemplateStringForFinalOutput, humanPromptTemplateStringForFinalOutputAgain, humanPromptTemplateStringForInitialOutput, systemPromptTemplateStringForFinalOutput, systemPromptTemplateStringForFinalOutputAgain, systemPromptTemplateStringForInitialOutput } from "./templates/email.template";
 import { ICampaign } from "./../../../modules/campaign/campaign.interfaces";
+import { humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondPass, humanPromptTemplateStringForThirdPass, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondPass } from "./templates/email.template";
 
 
 interface ISenderInformation {
@@ -36,13 +37,15 @@ interface IEmailCampaignArgs {
     objective?: string,
     includeDetails?: string,
     gptModelTemperature?: number,
+    modelName?: string,
 }
 
 
-export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", objective = "To write personalized email", recipientInformation, gptModelTemperature = 0 }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0 }: IEmailCampaignArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
-    const chat = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
+
+    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
@@ -50,25 +53,11 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
     const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForInitialOutput);
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
 
-    const initialEmailChain = new LLMChain({ llm: chat, prompt: chatPromptTemplate });
+    const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
 
-    const chat2 = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
-
-    const systemPromptTemplateForFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutput);
-    const humanPromptTemplateForFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutput);
-    const chatPromptTemplateForFinal = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForFinal, humanPromptTemplateForFinal]);
-    const finalEmailChain = new LLMChain({ llm: chat2, prompt: chatPromptTemplateForFinal })
-
-    const chat3 = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
-
-    const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForFinalOutputAgain);
-    const humanPromptTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForFinalOutputAgain);
-    const chatPromptTemplateForFinalAgain = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForAnotherFinal, humanPromptTemplateForAnotherFinal]);
-    const finalEmailChainAgain = new LLMChain({ llm: chat3, prompt: chatPromptTemplateForFinalAgain });
-
-    // const overall_chain = new ({ chains: [initial_email_chain, final_email_chain] });
+    // sending only email body
     const initialResponse = await initialEmailChain.predict({
-        template: `Email Subject: ${template.subject} \n Email Body:${template.body}`,
+        template: `${template.body}`,
         recipientEmail,
         recipientBusinessDomainURL,
         recipientBusinessSummary,
@@ -80,19 +69,34 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
         recipientDesignation,
         recipientName,
         sendersProductService,
-        objective,
         includeDetails,
     });
 
-    const finalResponse = await finalEmailChain.predict({
+
+    const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
+    const humanPromptTemplateForSecondPass = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
+    const chatPromptTemplateForSecondPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForSecondPass, humanPromptTemplateForSecondPass]);
+    const secondEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateForSecondPass })
+
+    const secondResponse = await secondEmailChain.predict({
         email: initialResponse
     })
 
-    const finalResponseAgain = await finalEmailChainAgain.predict({
-        email: finalResponse
+
+    const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
+    const humanPromptTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
+    const assistantTemplateForAnotherFinal = AIMessagePromptTemplate.fromTemplate(`${secondResponse}`)
+    const humanTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForThirdPass)
+
+    const chatPromptTemplateThirdPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForAnotherFinal, humanPromptTemplateForAnotherFinal, assistantTemplateForAnotherFinal, humanTemplateForAnotherFinal]);
+
+    const thirdEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateThirdPass })
+
+    const thirdResponse = await thirdEmailChain.predict({
+        email: secondResponse
     })
 
-    return finalResponseAgain;
+    return thirdResponse;
 };
 
 
