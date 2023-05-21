@@ -41,11 +41,10 @@ interface IEmailCampaignArgs {
 }
 
 
-export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0 }: IEmailCampaignArgs) => {
+export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0, modelName = "gpt-3.5-turbo" }: IEmailCampaignArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
-
-    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey });
+    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
@@ -54,7 +53,6 @@ export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, sende
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
 
     const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
-
     // sending only email body
     const initialResponse = await initialEmailChain.predict({
         template: `${template.body}`,

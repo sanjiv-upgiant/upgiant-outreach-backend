@@ -1,4 +1,5 @@
 
+import { listModels } from './../../app/openai';
 import IntegrationModel from '../integrations/integration.model';
 import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
 import { CampaignUrlModel } from './Url.model';
@@ -7,6 +8,7 @@ import CampaignModel from './campaign.model';
 
 export const createCampaign = async (campaign: ICampaign, user: string) => {
     const integration = await IntegrationModel.findById(campaign.outreachAgentId);
+    const openAiIntegration = await IntegrationModel.findById(campaign.openAiIntegrationId);
     if (integration && !integration?.meta?.["webhookAdded"]) {
         const result = await addLemlistWebHookForGivenCampaign(integration?.accessToken ?? "");
         if (result) {
@@ -14,6 +16,20 @@ export const createCampaign = async (campaign: ICampaign, user: string) => {
             await integration.save()
         }
     }
+
+    if (!openAiIntegration) {
+        throw new Error("No OpenAI found");
+    }
+    if (openAiIntegration && !openAiIntegration.meta?.["modelsList"]) {
+        const modelsList = await listModels(openAiIntegration.accessToken);
+        openAiIntegration.meta = { ...(openAiIntegration.meta || {}), modelsList };
+        await openAiIntegration.save();
+    }
+    const modelsList = openAiIntegration.meta["modelsList"] || [];
+    if (!modelsList.find((model: any) => model.id !== campaign.modelName)) {
+        throw new Error(`No model with name ${campaign.modelName} is available`)
+    }
+
     return CampaignModel.create({ ...campaign, user });
 }
 
