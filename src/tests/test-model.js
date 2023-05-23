@@ -1,9 +1,3 @@
-import { OpenAI } from "langchain";
-
-const openAIApiKey = "";
-const llm = new OpenAI({ temperature: 0.1, openAIApiKey, modelName: 'gpt-4' }, {
-
-});
 
 import { Configuration, OpenAIApi } from "openai";
 

@@ -19,7 +19,7 @@ const defaultIRoute: IRoute[] = [
     route: authRoute,
   },
   {
-    path: '/lemlist-hooks',
+    path: '/lemlist-hook',
     route: lemlistRoute,
   },
   {

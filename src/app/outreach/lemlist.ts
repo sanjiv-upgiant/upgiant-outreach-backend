@@ -31,7 +31,7 @@ export const addLemlistWebHookForGivenCampaign = async (accessToken: string) => 
     try {
         const url = `https://api.lemlist.com/api/hooks?access_token=${accessToken}`;
         const response = await axios.post(url, {
-            targetUrl: PROD_BACKEND_URL + "/lemlist-hooks",
+            targetUrl: PROD_BACKEND_URL + "/lemlist-hook",
             isFirst: true
         }, {
             headers: {
