@@ -100,11 +100,12 @@ export const parseEmailsFromHunterDomainSearch = (data: any = {}): IContactEmail
             lastName: email["first_name"],
             email: email["value"],
             companyName: data?.["data"]["organization"],
-            position: email["position"]
+            position: email["position"],
+            status: email["verification"]?.["status"] ?? ""
         }
         return contactEmail;
     });
-    return contactEmails;
+    return contactEmails.filter((email) => email.status === "valid");
 }
 
 export const parseEmailsFromHunterEmailFinder = (data: any = {}): IEmailFinderSearchResponse => {
@@ -115,7 +116,7 @@ export const parseEmailsFromHunterEmailFinder = (data: any = {}): IEmailFinderSe
         emails: []
     }
 
-    if (emails?.email) {
+    if (emails?.email && emails?.["verification"]?.["status"] === "valid") {
         contactEmail.emails.push({
             email: emails["email"],
             emailStatus: emails["verification"]?.["status"] ?? ""

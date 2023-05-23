@@ -9,10 +9,11 @@ interface SerpResponse {
     positions?: string[];
     title?: string;
     department?: string
+    seniority?: string
 }
 
 const getSerpQuery = (params: Omit<SerpResponse, "accessToken">) => {
-    const { domain, positions, title, department } = params;
+    const { domain, positions, title, department, seniority } = params;
     let query = `${domain} linkedin `;
     if (positions?.length) {
         query += positions[0] + " ";
@@ -22,6 +23,12 @@ const getSerpQuery = (params: Omit<SerpResponse, "accessToken">) => {
     }
     if (department) {
         query += department + " ";
+    }
+    if (seniority) {
+        query += seniority + " ";
+    }
+    if (!positions?.length && !title && !department) {
+        query += "CEO"
     }
     query = query.trim();
     return query;
@@ -39,8 +46,9 @@ export const cacheSerpApiResponseWithQuery = async (params: SerpResponse) => {
     const department = params.department ? `${params.department} | ` : '';
     const position = params.positions?.length ? `${params.positions[0]} | ` : '';
     const title = params.title ? params.title : '';
+    const seniority = params.seniority ? params.seniority : '';
 
-    const key = `${domain}${department}${position}${title}`;
+    const key = `${domain}-${department}-${position}-${title}-${seniority}`;
 
     const cachedResult = await IntegrationOutputModel.findOne({ key });
     if (cachedResult && (Date.now() - cachedResult.updatedAt.getTime()) / 1000 < CACHE_TTL) {

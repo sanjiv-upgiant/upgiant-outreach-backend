@@ -78,15 +78,18 @@ export const parseEmailsFromApolloEmailSearch = (data: any = {}): IContactEmail[
         const firstName = people["first_name"];
         const lastName = people["last_name"];
         const email = people["email"];
+        const emailStatus = people["email_status"];
         const position = people["seniority"];
         const companyName = people["organization"]?.["name"] || "";
-        response.push({
-            firstName,
-            lastName,
-            email,
-            position,
-            companyName
-        })
+        if (emailStatus === "verified") {
+            response.push({
+                firstName,
+                lastName,
+                email,
+                position,
+                companyName
+            })
+        }
     }
     return response;
 }
@@ -147,10 +150,12 @@ export const parseEmailsFromApolloEmailFinder = (data: any = {}): IEmailFinderSe
     };
 
     if (person["email"]) {
-        response.emails.push({
-            email: person["email"],
-            emailStatus: person["email_status"]
-        })
+        if (person["email_status"] === "verified") {
+            response.emails.push({
+                email: person["email"],
+                emailStatus: person["email_status"]
+            })
+        }
     }
     return response;
 }

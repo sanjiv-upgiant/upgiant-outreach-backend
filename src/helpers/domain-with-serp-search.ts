@@ -31,7 +31,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
         domain: url,
         accessToken: serpApiIntegration.accessToken,
         positions: audienceFilters.positions,
-        department: audienceFilters.department
+        department: audienceFilters.department,
     });
     const results = parseSerpResponse(response);
     const employeesInformationString = await extractEmployeesInformationFromSerp(openAIIntegration.accessToken, query, results);

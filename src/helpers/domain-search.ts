@@ -12,6 +12,7 @@ export interface IContactEmail {
     lastName?: string,
     position?: string
     companyName?: string,
+    status?: string
 }
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {

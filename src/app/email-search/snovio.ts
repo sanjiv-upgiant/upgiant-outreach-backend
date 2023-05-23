@@ -3,6 +3,7 @@ import { stringify } from "querystring";
 import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
 import { getAxiosInstance } from "../../modules/limitedAxios";
 import redisClient from '../../redis';
+import { IContactEmail } from "src/helpers/domain-search";
 
 const client = redisClient.client;
 
@@ -118,11 +119,14 @@ export const cacheEmailsFinder = async (integration: string, accessToken: string
 
 export const parseEmailsFromSnovIODomainSearch = (data: any = {}) => {
     const emails = data["emails"] || [];
-    return emails;
+    return emails.filter((email: any) => email.status === "verified");
 }
 
 export const parseEmailsFromSnovIOEmailSearch = (data: any = {}) => {
-    const emails = data["data"];
-    return emails;
+    const emailsData = data["data"];
+    return {
+        ...emailsData,
+        emails: emailsData["emails"].filter((insideEmail: any) => insideEmail.emailStatus === "valid")
+    }
 }
 
