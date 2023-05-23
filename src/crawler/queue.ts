@@ -93,6 +93,7 @@ const getCampaignQueue = (queueId: string) => {
             });
         }
 
+
         if (searchType === SearchType.DOMAINS) {
             await searchWithDomain(campaignJson, urlFromDatabase);
         }

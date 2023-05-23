@@ -3,7 +3,6 @@ import { stringify } from "querystring";
 import { IntegrationOutputModel } from "../../modules/integrations/integration.model";
 import { getAxiosInstance } from "../../modules/limitedAxios";
 import redisClient from '../../redis';
-import { IContactEmail } from "src/helpers/domain-search";
 
 const client = redisClient.client;
 

@@ -32,6 +32,22 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     res.status(httpStatus.CREATED).send(campaign);
 });
 
+// export const test = async () => {
+//     const campaign = await CampaignModel.findById("646c6ba0a97d0215212ef218");
+//     if (!campaign) {
+//         return;
+//     }
+//     const scrapeQueue = getCampaignQueue(campaign.id);
+//     for (const url of campaign.urls) {
+//         scrapeQueue.add({
+//             user: null,
+//             url,
+//             campaignJson: campaign.toJSON()
+//         }, jobOptions)
+//     }
+// };
+
+
 export const getUserCampaignsController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const { page = "1" } = req.query as { page?: string };

@@ -1,16 +1,16 @@
-import express, { Express } from 'express';
-import helmet from 'helmet';
-import xss from 'xss-clean';
-import ExpressMongoSanitize from 'express-mongo-sanitize';
 import compression from 'compression';
 import cors from 'cors';
-import passport from 'passport';
+import express, { Express } from 'express';
+import ExpressMongoSanitize from 'express-mongo-sanitize';
+import helmet from 'helmet';
 import httpStatus from 'http-status';
+import passport from 'passport';
+import xss from 'xss-clean';
 import config from './config/config';
-import { morgan } from './modules/logger';
 import { jwtStrategy } from './modules/auth';
-import { authLimiter } from './modules/utils';
 import { ApiError, errorConverter, errorHandler } from './modules/errors';
+import { morgan } from './modules/logger';
+import { authLimiter } from './modules/utils';
 import routes from './routes/v1';
 
 const app: Express = express();
@@ -51,6 +51,7 @@ if (config.env === 'production') {
 
 // v1 api routes
 app.use('/v1', routes);
+
 
 // send back a 404 error for any unknown api request
 app.use((_req, _res, next) => {

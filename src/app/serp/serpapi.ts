@@ -27,7 +27,7 @@ const getSerpQuery = (params: Omit<SerpResponse, "accessToken">) => {
     if (seniority) {
         query += seniority + " ";
     }
-    if (!positions?.length && !title && !department) {
+    if (!positions?.length && !title) {
         query += "CEO"
     }
     query = query.trim();

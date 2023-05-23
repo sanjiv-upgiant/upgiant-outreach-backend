@@ -18,11 +18,13 @@ export interface IEmailFinderSearchResponse {
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
     const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
     const { url, info } = websiteUrlInfo;
+
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
-
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+
     if (!outreachIntegration || !serpApiIntegration || !openAIIntegration) {
+        console.log("returning,");
         return;
     }
 
@@ -37,16 +39,18 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
     const employeesInformationString = await extractEmployeesInformationFromSerp(openAIIntegration.accessToken, query, results);
     const employessInformationJson: { firstName: string, lastName: string, position: string }[] = JSON.parse(employeesInformationString) || [];
 
-
+    let index = 0;
     for (const employee of employessInformationJson) {
-
+        index += 1;
         const contactEmails = await getEmailFromFirstNameAndLastNameServices({ integrationIds: emailSearchServiceIds, url, firstName: employee["firstName"], lastName: employee["lastName"] });
 
         if (!contactEmails?.emails?.length) {
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                error: true,
-                errorReason: "0 emails found"
-            });
+            if (index === employessInformationJson.length - 1) {
+                await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
+                    error: true,
+                    errorReason: "0 emails found"
+                });
+            }
         }
         else {
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
