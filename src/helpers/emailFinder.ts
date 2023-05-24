@@ -78,6 +78,7 @@ export const getEmailFromFirstNameAndLastNameServices = async ({ integrationIds,
             return contactEmails;
         }
         if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
+            console.log("trying snovio");
             const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
 
             const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, firstName, lastName, url);
@@ -85,6 +86,7 @@ export const getEmailFromFirstNameAndLastNameServices = async ({ integrationIds,
             contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
         }
         else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
+            console.log("trying apollo");
             const employeeEmails = await getCachedEmailFinderFromApollo({
                 firstName,
                 lastName,

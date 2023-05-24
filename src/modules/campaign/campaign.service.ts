@@ -1,10 +1,71 @@
 
-import { listModels } from './../../app/openai';
 import IntegrationModel from '../integrations/integration.model';
+import { writeSubjectAndBodyOfEmail } from '../langchain/email';
+import { extractCompanySummaryFromTitleAndBody } from '../langchain/summary';
+import { extractTitleAndText } from '../utils/url';
+import { listModels } from './../../app/openai';
 import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
-import { CampaignUrlModel } from './Url.model';
-import { ICampaign } from './campaign.interfaces';
+import scrape from './../../crawler/scraper';
+import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
+import UrlModel, { CampaignUrlModel } from './Url.model';
+import { ICampaign, UrlStatus } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
+
+interface ICreateTestEmailCampaignArgs extends ICampaign {
+    url: string
+}
+
+export const createTestEmailCampaign = async ({ templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters }: ICreateTestEmailCampaignArgs) => {
+    const openAi = await IntegrationModel.findById(openAiIntegrationId);
+
+    if (!templates?.[0]) {
+        throw new Error("Templates not found")
+    }
+    if (!openAi) {
+        throw new Error("No Integration not found")
+    }
+    const html = await scrape(url);
+    const { title, body } = extractTitleAndText(html);
+    await UrlModel.findOneAndUpdate({ url }, {
+        html,
+        url,
+        title,
+        body,
+        status: UrlStatus.SUMMARY_EXTRACTED
+    }, {
+        upsert: true,
+        new: true
+    });
+    const info = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
+    await UrlModel.findOneAndUpdate({ url }, {
+        info,
+        status: UrlStatus.SUMMARY_EXTRACTED
+    });
+
+    const contactEmails = await getEmailFromEmailFinderServices({ integrationIds: emailSearchServiceIds, audienceFilters, url });
+    const contactEmail = contactEmails?.[0];
+    if (!contactEmail) {
+        throw new Error("No contact emails were found. Try using different sender service or select different url")
+    }
+    console.log("Writing Test Email");
+    const emailBody = await writeSubjectAndBodyOfEmail({
+        template: templates[0],
+        senderInformation,
+        recipientInformation: {
+            recipientBusinessDomainURL: url,
+            recipientBusinessSummary: info,
+            recipientEmail: contactEmail["email"],
+            recipientDesignation: contactEmail["position"],
+            recipientName: contactEmail["firstName"] ?? ""
+        },
+        objective,
+        includeDetails,
+        openAIApiKey: openAi.accessToken,
+        gptModelTemperature,
+        modelName
+    });
+    return emailBody;
+}
 
 export const createCampaign = async (campaign: ICampaign, user: string) => {
     const integration = await IntegrationModel.findById(campaign.outreachAgentId);

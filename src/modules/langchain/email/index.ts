@@ -12,7 +12,7 @@ import { ICampaign } from "./../../../modules/campaign/campaign.interfaces";
 import { humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondPass, humanPromptTemplateStringForThirdPass, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondPass } from "./templates/email.template";
 
 
-interface ISenderInformation {
+export interface ISenderInformation {
     sendersName: string;
     sendersCompanyBusinessSummary: string;
     sendersCompanyDomainURL: string;

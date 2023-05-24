@@ -50,7 +50,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                     recipientBusinessDomainURL: url,
                     recipientBusinessSummary: info,
                     recipientEmail: contactEmail["email"],
-                    recipientDesignation: contactEmail["position"]
+                    recipientDesignation: contactEmail["position"],
+                    recipientName: contactEmail["firstName"] ?? ""
                 },
                 objective,
                 includeDetails,

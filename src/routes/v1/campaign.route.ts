@@ -4,11 +4,13 @@ import { createCampaignValidation } from '../../modules/campaign/campaign.valida
 import { auth } from '../../modules/auth';
 import { createCampaignController } from '../../modules/campaign';
 import { validate } from '../../modules/validate';
-import { deleteUserCampaignController, editCampaignController, getSingleCampaignUrlsController, getUserCampaignsController, getUserSingleCampaignController } from '../../modules/campaign/campaign.controller';
+import { deleteUserCampaignController, editCampaignController, emailTemplateController, getSingleCampaignUrlsController, getUserCampaignsController, getUserSingleCampaignController } from '../../modules/campaign/campaign.controller';
+import { createEmailTemplateValidation } from '../../modules/campaign/campaign.validatation';
 
 const router = Router();
 
 router.post("/create", auth(), validate(createCampaignValidation), createCampaignController)
+router.post("/get-email-template", auth(), validate(createEmailTemplateValidation), emailTemplateController)
 router.get("/", auth(), getUserCampaignsController)
 router.delete("/:id", auth(), deleteUserCampaignController)
 router.get("/:id/urls", auth(), getSingleCampaignUrlsController)

@@ -5,7 +5,7 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { createCampaign, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { createCampaign, createTestEmailCampaign, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 const limit = "10";
 const jobOptions: JobOptions = {
@@ -15,6 +15,11 @@ const jobOptions: JobOptions = {
         delay: 2000
     }
 }
+
+export const emailTemplateController = catchAsync(async (req: Request, res: Response) => {
+    const emailGenerated = await createTestEmailCampaign(req.body);
+    res.status(httpStatus.CREATED).send(emailGenerated);
+});
 
 export const createCampaignController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
@@ -32,8 +37,8 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     res.status(httpStatus.CREATED).send(campaign);
 });
 
-// export const test = async () => {
-//     const campaign = await CampaignModel.findById("646c6ba0a97d0215212ef218");
+// (async () => {
+//     const campaign = await CampaignModel.findById("646cb2eb6f24530390ef4d62");
 //     if (!campaign) {
 //         return;
 //     }
@@ -45,7 +50,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
 //             campaignJson: campaign.toJSON()
 //         }, jobOptions)
 //     }
-// };
+// });
 
 
 export const getUserCampaignsController = catchAsync(async (req: Request, res: Response) => {
