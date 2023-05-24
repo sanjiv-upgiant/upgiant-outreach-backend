@@ -6,6 +6,7 @@ import { getCachedBulkEmailSearchFromApollo, getCachedEmailFinderFromApollo, par
 import { getCacheDomainSearchedEmailsFromHunter, getCacheEmailsFinderFromHunter, parseEmailsFromHunterDomainSearch, parseEmailsFromHunterEmailFinder } from "./../app/email-search/hunter";
 import { ICampaign } from "./../modules/campaign/campaign.interfaces";
 import { IEmailFinderSearchResponse } from "./domain-with-serp-search";
+import { logger } from "./../modules/logger";
 
 interface GetEmailFromEmailFinderServicesProps {
     integrationIds: string[],
@@ -21,34 +22,39 @@ export const getEmailFromEmailFinderServices = async ({ integrationIds, audience
         if (!emailSearchIntegration) {
             return contactEmails;
         }
+        try {
+            if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
+                const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
 
-        if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
-            const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
+                const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegration.id, accessToken, url, audienceFilters.positions);
+                contactEmails = parseEmailsFromSnovIODomainSearch(domainSearchWithResults);
+            }
 
-            const domainSearchWithResults = await getCacheDomainSearchedEmails(emailSearchIntegration.id, accessToken, url, audienceFilters.positions);
-            contactEmails = parseEmailsFromSnovIODomainSearch(domainSearchWithResults);
+            else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
+                const apolloBulkEmailSearch = await getCachedBulkEmailSearchFromApollo({
+                    integrationId: emailSearchIntegration.id,
+                    url,
+                    positions: audienceFilters.positions,
+                    accessToken: emailSearchIntegration.accessToken
+                });
+                contactEmails = parseEmailsFromApolloEmailSearch(apolloBulkEmailSearch);
+            }
+
+            else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
+                const hunterEmailSearchFromDomain = await getCacheDomainSearchedEmailsFromHunter({
+                    integrationId: emailSearchIntegration.id,
+                    domain: url,
+                    seniority: audienceFilters.seniority,
+                    department: audienceFilters.department,
+                    accessToken: emailSearchIntegration.accessToken
+                });
+                contactEmails = parseEmailsFromHunterDomainSearch(hunterEmailSearchFromDomain);
+            }
+        }
+        catch (err: unknown) {
+            logger.error(`Fetching email error. We are using ${emailSearchIntegration.type}`, err);
         }
 
-        else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
-            const apolloBulkEmailSearch = await getCachedBulkEmailSearchFromApollo({
-                integrationId: emailSearchIntegration.id,
-                url,
-                positions: audienceFilters.positions,
-                accessToken: emailSearchIntegration.accessToken
-            });
-            contactEmails = parseEmailsFromApolloEmailSearch(apolloBulkEmailSearch);
-        }
-
-        else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
-            const hunterEmailSearchFromDomain = await getCacheDomainSearchedEmailsFromHunter({
-                integrationId: emailSearchIntegration.id,
-                domain: url,
-                seniority: audienceFilters.seniority,
-                department: audienceFilters.department,
-                accessToken: emailSearchIntegration.accessToken
-            });
-            contactEmails = parseEmailsFromHunterDomainSearch(hunterEmailSearchFromDomain);
-        }
 
         if (contactEmails.length) {
             return contactEmails;
@@ -77,35 +83,41 @@ export const getEmailFromFirstNameAndLastNameServices = async ({ integrationIds,
         if (!emailSearchIntegration) {
             return contactEmails;
         }
-        if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
-            console.log("trying snovio");
-            const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
+        try {
+            if (emailSearchIntegration.type === IntegrationTypes.SNOVIO) {
+                console.log("trying snovio");
+                const accessToken = await getSnovioAccessTokenIfNeeded(emailSearchIntegration.id, emailSearchIntegration.clientId, emailSearchIntegration.clientSecret);
 
-            const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, firstName, lastName, url);
+                const employeeEmails = await cacheEmailsFinder(emailSearchIntegration.id, accessToken, firstName, lastName, url);
 
-            contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
+                contactEmails = parseEmailsFromSnovIOEmailSearch(employeeEmails);
+            }
+            else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
+                console.log("trying apollo");
+                const employeeEmails = await getCachedEmailFinderFromApollo({
+                    firstName,
+                    lastName,
+                    domain: url,
+                    accessToken: emailSearchIntegration.accessToken,
+                    integrationId: emailSearchIntegration.id
+                });
+                contactEmails = parseEmailsFromApolloEmailFinder(employeeEmails);
+            }
+            else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
+                const employeeEmails = await getCacheEmailsFinderFromHunter({
+                    firstName,
+                    lastName,
+                    domain: url,
+                    accessToken: emailSearchIntegration.accessToken,
+                    integrationId: emailSearchIntegration.id
+                });
+                contactEmails = parseEmailsFromHunterEmailFinder(employeeEmails);
+            }
         }
-        else if (emailSearchIntegration.type === IntegrationTypes.APOLLO) {
-            console.log("trying apollo");
-            const employeeEmails = await getCachedEmailFinderFromApollo({
-                firstName,
-                lastName,
-                domain: url,
-                accessToken: emailSearchIntegration.accessToken,
-                integrationId: emailSearchIntegration.id
-            });
-            contactEmails = parseEmailsFromApolloEmailFinder(employeeEmails);
+        catch (err: unknown) {
+            logger.error(`Fetching email error. We are using ${emailSearchIntegration.type}`, err);
         }
-        else if (emailSearchIntegration.type === IntegrationTypes.HUNTER) {
-            const employeeEmails = await getCacheEmailsFinderFromHunter({
-                firstName,
-                lastName,
-                domain: url,
-                accessToken: emailSearchIntegration.accessToken,
-                integrationId: emailSearchIntegration.id
-            });
-            contactEmails = parseEmailsFromHunterEmailFinder(employeeEmails);
-        }
+
         if (contactEmails.emails.length > 0) {
             return contactEmails;
         }

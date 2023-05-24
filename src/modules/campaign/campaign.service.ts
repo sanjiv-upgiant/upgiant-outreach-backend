@@ -47,7 +47,7 @@ export const createTestEmailCampaign = async ({ templates, url, openAiIntegratio
     if (!contactEmail) {
         throw new Error("No contact emails were found. Try using different sender service or select different url")
     }
-    console.log("Writing Test Email");
+    console.log("summary contact email got", contactEmail);
     const emailBody = await writeSubjectAndBodyOfEmail({
         template: templates[0],
         senderInformation,
