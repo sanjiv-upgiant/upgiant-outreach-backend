@@ -10,9 +10,6 @@ const options: PuppeteerLaunchOptions = {
 
 const scrape = async (url: string) => {
     const env = process.env["NODE_ENV"] || 'development';
-    if (env !== "development") {
-        options.executablePath = "/usr/bin/chromium-browser"
-    }
     const browser = await puppeteer.launch(options);
     const page = await browser.newPage();
     await page.goto(url);
