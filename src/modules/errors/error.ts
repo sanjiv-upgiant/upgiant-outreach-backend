@@ -21,7 +21,7 @@ export const errorHandler = (err: ApiError, _req: Request, res: Response, _next:
   let { statusCode, message } = err;
   if (config.env === 'production' && !err.isOperational) {
     statusCode = httpStatus.INTERNAL_SERVER_ERROR;
-    message = 'Internal Server Error';
+    message = message ? message : 'Internal Server Error';
   }
 
   res.locals['errorMessage'] = err.message;
