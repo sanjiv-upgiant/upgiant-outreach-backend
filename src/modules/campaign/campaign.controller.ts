@@ -12,7 +12,7 @@ const jobOptions: JobOptions = {
     attempts: 2,
     backoff: {
         type: "exponential",
-        delay: 2000
+        delay: 10000
     }
 }
 
