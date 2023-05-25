@@ -4,7 +4,9 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 puppeteer.use(StealthPlugin());
 
-const options: PuppeteerLaunchOptions = {};
+const options: PuppeteerLaunchOptions = {
+    args: ['--no-sandbox'],
+};
 
 const scrape = async (url: string) => {
     const env = process.env["NODE_ENV"] || 'development';
