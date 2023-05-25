@@ -15,7 +15,7 @@ interface ICreateTestEmailCampaignArgs extends ICampaign {
     url: string
 }
 
-export const createTestEmailCampaign = async ({ templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters }: ICreateTestEmailCampaignArgs) => {
+export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters }: ICreateTestEmailCampaignArgs) => {
     const openAi = await IntegrationModel.findById(openAiIntegrationId);
 
     if (!templates?.[0]) {
@@ -24,23 +24,31 @@ export const createTestEmailCampaign = async ({ templates, url, openAiIntegratio
     if (!openAi) {
         throw new Error("No Integration not found")
     }
-    const html = await scrape(url);
-    const { title, body } = extractTitleAndText(html);
-    await UrlModel.findOneAndUpdate({ url }, {
-        html,
-        url,
-        title,
-        body,
-        status: UrlStatus.SUMMARY_EXTRACTED
-    }, {
-        upsert: true,
-        new: true
-    });
-    const info = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
-    await UrlModel.findOneAndUpdate({ url }, {
-        info,
-        status: UrlStatus.SUMMARY_EXTRACTED
-    });
+
+    const urlFromDb = await UrlModel.findOne({ url });
+    let businessInfo = "";
+    if (!urlFromDb) {
+        const html = await scrape(url);
+        const { title, body } = extractTitleAndText(html);
+        await UrlModel.findOneAndUpdate({ url }, {
+            html,
+            url,
+            title,
+            body,
+            status: UrlStatus.SUMMARY_EXTRACTED
+        }, {
+            upsert: true,
+            new: true
+        });
+        businessInfo = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
+        await UrlModel.findOneAndUpdate({ url }, {
+            info: businessInfo,
+            status: UrlStatus.SUMMARY_EXTRACTED
+        });
+    }
+    else {
+        businessInfo = urlFromDb.info
+    }
 
     const contactEmails = await getEmailFromEmailFinderServices({ integrationIds: emailSearchServiceIds, audienceFilters, url });
     const contactEmail = contactEmails?.[0];
@@ -53,7 +61,7 @@ export const createTestEmailCampaign = async ({ templates, url, openAiIntegratio
         senderInformation,
         recipientInformation: {
             recipientBusinessDomainURL: url,
-            recipientBusinessSummary: info,
+            recipientBusinessSummary: businessInfo,
             recipientEmail: contactEmail["email"],
             recipientDesignation: contactEmail["position"],
             recipientName: contactEmail["firstName"] ?? ""

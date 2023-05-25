@@ -5,7 +5,7 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { createCampaign, createTestEmailCampaign, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 const limit = "10";
 const jobOptions: JobOptions = {
@@ -17,7 +17,7 @@ const jobOptions: JobOptions = {
 }
 
 export const emailTemplateController = catchAsync(async (req: Request, res: Response) => {
-    const emailGenerated = await createTestEmailCampaign(req.body);
+    const emailGenerated = await createTestEmailFromEmailTemplate(req.body);
     res.status(httpStatus.CREATED).send(emailGenerated);
 });
 
