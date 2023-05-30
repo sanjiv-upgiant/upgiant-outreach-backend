@@ -15,6 +15,12 @@ jobs:
         with:
           node-version: '18.13.0'
 
+      - name: Setup pm2
+        run: npm install -g pm2
+
+      - name: Setup Yarn
+        run: npm install -g yarn
+
       - name: executing remote ssh command using password
         uses: appleboy/ssh-action@master
         with:
