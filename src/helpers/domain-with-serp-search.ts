@@ -5,7 +5,7 @@ import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
-import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
+import { writeBodyOfEmail, writeSubjectOfEmail } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 import { getEmailFromFirstNameAndLastNameServices } from "./emailFinder";
 
@@ -62,27 +62,36 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                 const emailBodies: string[] = [];
                 const emailSubjects: string[] = [];
                 for (const template of templates) {
-                    const emailBody = await writeSubjectAndBodyOfEmail({
+                    const recipientInformation = {
+                        recipientBusinessDomainURL: url,
+                        recipientBusinessSummary: info,
+                        recipientEmail: contactEmail["email"],
+                        recipientDesignation: employee["position"]
+                    }
+                    const emailBody = await writeBodyOfEmail({
                         modelName,
                         gptModelTemperature,
                         template,
                         senderInformation,
-                        recipientInformation: {
-                            recipientBusinessDomainURL: url,
-                            recipientBusinessSummary: info,
-                            recipientEmail: contactEmail["email"],
-                            recipientDesignation: employee["position"]
-                        },
+                        recipientInformation,
                         objective,
                         includeDetails,
                         openAIApiKey: openAIIntegration.accessToken
                     });
+
+                    const emailSubject = await writeSubjectOfEmail({
+                        recipientInformation,
+                        emailBody,
+                        openAIApiKey: openAIIntegration.accessToken,
+                        gptModelTemperature,
+                        modelName
+                    })
                     await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                        emailSubject: "",
+                        emailSubject,
                         emailBody
                     });
                     emailBodies.push(emailBody);
-                    emailSubjects.push("");
+                    emailSubjects.push(emailSubject);
                 }
                 await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                     emailSubjects,
@@ -98,9 +107,10 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                     }
                     for (let i = 0; i < emailBodies.length; i++) {
                         const emailBody = emailBodies[i];
+                        const emailSubject = emailSubjects[i] ?? "";
                         if (emailBody) {
                             rightOBody["icebreaker"] = emailBody;
-                            rightOBody["rightOEmailSubject"] = "";
+                            rightOBody["rightOEmailSubject"] = emailSubject;
                         }
                     }
 

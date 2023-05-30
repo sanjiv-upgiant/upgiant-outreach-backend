@@ -51,9 +51,9 @@ SendersEmail: {sendersEmail}
 SenderCompanyDomainURL: {sendersCompanyDomainURL}
 SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
 
+RecipientName: {recipientName}  
 RecipientBusinessName: {recipientBusinessName}
 RecipientDesignation {recipientDesignation}
-RecipientName: {recipientName}  
 SendersProductService: {sendersProductService}
 Include following Details for email: {includeDetails}
 

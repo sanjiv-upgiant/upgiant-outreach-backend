@@ -3,7 +3,7 @@ import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
-import { writeSubjectAndBodyOfEmail } from "./../modules/langchain/email";
+import { writeBodyOfEmail, writeSubjectOfEmail } from "./../modules/langchain/email";
 import { getEmailFromEmailFinderServices } from './emailFinder';
 
 export interface IContactEmail {
@@ -43,16 +43,17 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
         const emailBodies: string[] = [];
         const emailSubjects: string[] = [];
         for (const template of templates) {
-            const emailBody = await writeSubjectAndBodyOfEmail({
+            const recipientInformation = {
+                recipientBusinessDomainURL: url,
+                recipientBusinessSummary: info,
+                recipientEmail: contactEmail["email"],
+                recipientDesignation: contactEmail["position"],
+                recipientName: contactEmail["firstName"] ?? ""
+            }
+            const emailBody = await writeBodyOfEmail({
                 template,
                 senderInformation,
-                recipientInformation: {
-                    recipientBusinessDomainURL: url,
-                    recipientBusinessSummary: info,
-                    recipientEmail: contactEmail["email"],
-                    recipientDesignation: contactEmail["position"],
-                    recipientName: contactEmail["firstName"] ?? ""
-                },
+                recipientInformation,
                 objective,
                 includeDetails,
                 openAIApiKey: openAIIntegration.accessToken,
@@ -60,12 +61,20 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 modelName
             });
 
+            const emailSubject = await writeSubjectOfEmail({
+                recipientInformation,
+                emailBody,
+                openAIApiKey: openAIIntegration.accessToken,
+                gptModelTemperature,
+                modelName
+            })
+
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                emailSubject: "",
+                emailSubject: emailSubject,
                 emailBody: emailBody
             });
             emailBodies.push(emailBody);
-            emailSubjects.push("");
+            emailSubjects.push(emailSubject);
         }
 
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
@@ -83,9 +92,10 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             };
             for (let i = 0; i < emailBodies.length; i++) {
                 const emailBody = emailBodies[i];
+                const emailSubject = emailSubjects[i] ?? "";
                 if (emailBody) {
-                    rightOBody[`rightOEmailSubject`] = "";
                     rightOBody["icebreaker"] = emailBody;
+                    rightOBody[`rightOEmailSubject`] = emailSubject;
                 }
             }
 

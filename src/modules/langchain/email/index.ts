@@ -10,6 +10,7 @@ import {
 } from "langchain/prompts";
 import { ICampaign } from "./../../../modules/campaign/campaign.interfaces";
 import { humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondPass, humanPromptTemplateStringForThirdPass, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondPass } from "./templates/email.template";
+import { subjectSytemTemplateString, subjectUserTemplateString } from "./templates/subject.template";
 
 
 export interface ISenderInformation {
@@ -31,17 +32,46 @@ interface IRecipientInformation {
 
 interface IEmailCampaignArgs {
     template: ICampaign["templates"][0],
-    openAIApiKey: string,
     senderInformation: ISenderInformation,
     recipientInformation: IRecipientInformation,
     objective?: string,
     includeDetails?: string,
+    openAIApiKey: string,
     gptModelTemperature?: number,
     modelName?: string,
 }
 
+interface IEmailSubjectArgs {
+    recipientInformation: IRecipientInformation,
+    emailBody: string,
+    openAIApiKey: string,
+    gptModelTemperature?: number,
+    modelName?: string,
+}
 
-export const writeSubjectAndBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0, modelName = "gpt-3.5-turbo" }: IEmailCampaignArgs) => {
+export const writeSubjectOfEmail = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: IEmailSubjectArgs) => {
+    const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
+
+
+    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
+    const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
+    const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(subjectUserTemplateString);
+    const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate]);
+    const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
+
+    const response = await initialEmailChain.predict({
+        recipientName,
+        recipientBusinessName,
+        recipientDesignation,
+        recipientBusinessDomainURL,
+        recipientBusinessSummary,
+        emailBody
+    })
+
+    return response;
+}
+
+export const writeBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0, modelName = "gpt-3.5-turbo" }: IEmailCampaignArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
