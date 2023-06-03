@@ -5,7 +5,7 @@ export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
         urls: Joi.alternatives().conditional("searchType", {
-            is: (searchType: SearchType) => searchType !== SearchType.MANUAL_UPLOAD,
+            is: Joi.not(SearchType.MANUAL_UPLOAD),
             then: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
             otherwise: Joi.optional()
         }),

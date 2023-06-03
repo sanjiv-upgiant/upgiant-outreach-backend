@@ -41,6 +41,14 @@ interface ICreateEmailBodyArgs {
     modelName?: string,
 }
 
+interface ICreateEmailSubjectArgs {
+    recipientInformation: IRecipientInformation,
+    emailBody: string,
+    openAIApiKey: string,
+    gptModelTemperature?: number,
+    modelName?: string,
+}
+
 interface ICreateEmailBodyArgsManualUpload {
     template: ICampaign["templates"][0],
     senderInformation: ISenderInformation,
@@ -50,15 +58,9 @@ interface ICreateEmailBodyArgsManualUpload {
     openAIApiKey: string,
     gptModelTemperature?: number,
     modelName?: string,
+    email: string,
+}
 
-}
-interface ICreateEmailSubjectArgs {
-    recipientInformation: IRecipientInformation,
-    emailBody: string,
-    openAIApiKey: string,
-    gptModelTemperature?: number,
-    modelName?: string,
-}
 interface ICreateEmailSubjectArgsManualUpload {
     recipientInformation: { [x: string]: any },
     emailBody: string,
@@ -144,7 +146,7 @@ export const writeEmailBody = async ({ template, openAIApiKey, senderInformation
     return thirdResponse;
 };
 
-export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails, gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation }: ICreateEmailBodyArgsManualUpload) => {
+export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails, gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation, objective, email }: ICreateEmailBodyArgsManualUpload) => {
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
@@ -157,6 +159,7 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
 
     const initialResponse = await initialEmailChain.predict({
         template: `${template.body}`,
+        email,
         recipientInformation: JSON.stringify(recipientInformation),
         sendersName,
         sendersEmail,
@@ -164,12 +167,15 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
         sendersCompanyBusinessSummary,
         sendersProductService,
         includeDetails,
+        objective,
     });
 
     const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
     const humanPromptTemplateForSecondPass = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
     const chatPromptTemplateForSecondPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForSecondPass, humanPromptTemplateForSecondPass]);
     const secondEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateForSecondPass })
+
+    console.log(initialResponse, 'response');
 
     const secondResponse = await secondEmailChain.predict({
         email: initialResponse

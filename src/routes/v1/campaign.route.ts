@@ -11,8 +11,7 @@ const router = Router();
 
 router.post("/create", auth(), validate(createCampaignValidation), createCampaignController)
 router.post("/get-email-template", auth(), validate(createEmailTemplateValidation), emailTemplateController)
-router.post("/upload", uploadCampaignFileController)
-// router.post("/upload", auth(), uploadCampaignFileController)
+router.post("/upload", auth(), uploadCampaignFileController)
 router.get("/", auth(), getUserCampaignsController)
 router.delete("/:id", auth(), deleteUserCampaignController)
 router.get("/:id/urls", auth(), getSingleCampaignUrlsController)

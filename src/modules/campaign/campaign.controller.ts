@@ -8,8 +8,8 @@ import CampaignModel from "./campaign.model";
 import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 import multer from "multer";
-import { getCsvDataFromCampaign } from './../../helpers/manual-upload-search';
 import path from 'path';
+import { getCsvDataFromCampaign } from './../../helpers/manual-upload-search';
 
 
 const multerStorage = multer.diskStorage({

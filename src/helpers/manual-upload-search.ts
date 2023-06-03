@@ -19,7 +19,7 @@ interface ICsvData {
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
     const email = csvData["email"];
-    const { templates, openAiIntegrationId, emailSearchServiceCampaignId, outreachAgentId, gptModelTemperature = 0, modelName, objective, includeDetails, senderInformation, id } = campaignJson;
+    const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, objective, includeDetails, senderInformation, id, emailSearchServiceCampaignId } = campaignJson;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
     if (!outreachIntegration || !openAIIntegration) {
@@ -32,6 +32,7 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
             recipientEmail: email,
         }
         const emailBody = await writeEmailBodyUsingManualData({
+            email,
             template,
             senderInformation,
             recipientInformation,
@@ -52,7 +53,10 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
 
         await CampaignUrlModel.findOneAndUpdate({ url: csvData["email"], campaignId: id }, {
             emailSubject: emailSubject,
-            emailBody: emailBody
+            emailBody: emailBody,
+            contactEmails: [{
+                email
+            }]
         });
         emailBodies.push(emailBody);
         emailSubjects.push(emailSubject);

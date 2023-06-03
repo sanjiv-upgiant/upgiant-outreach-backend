@@ -74,17 +74,17 @@ export const humanPromptTemplateStringForManualUpload = `
 Here's the details of the email.
 
 OriginalMessage: {template}
-RecipientsEmail: {recipientEmail}
+RecipientsEmail: {email}
 RecipientsInformation: {recipientInformation}
 
 SendersName: {sendersName}
 SendersEmail: {sendersEmail}
 SenderCompanyDomainURL: {sendersCompanyDomainURL}
 SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
-
 SendersProductService: {sendersProductService}
-Include following Details for email: {includeDetails}
+emailObjective: {objective}
 
+Include following Details for email: {includeDetails}
 
 About the PersonalizedMessage:
 >> ONLY write the email body, no other part of the email

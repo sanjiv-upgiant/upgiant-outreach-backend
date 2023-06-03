@@ -20,7 +20,7 @@ export const parseCsv = async (manualUpload: { file: string, selectedColumnNames
     return emailsWithMappedData;
 }
 
-const getValueFromSelectedColumnNames = async (selectedColumnNames: string[], data: { [x: string]: any }) => {
+const getValueFromSelectedColumnNames = (selectedColumnNames: string[], data: { [x: string]: any }) => {
     const mappedData: any = {};
     for (const column of selectedColumnNames) {
         mappedData[column] = data[column];
