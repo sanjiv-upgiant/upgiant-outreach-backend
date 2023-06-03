@@ -175,8 +175,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const chatPromptTemplateForSecondPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForSecondPass, humanPromptTemplateForSecondPass]);
     const secondEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateForSecondPass })
 
-    console.log(initialResponse, 'response');
-
     const secondResponse = await secondEmailChain.predict({
         email: initialResponse
     })

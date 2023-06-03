@@ -106,6 +106,9 @@ const getCampaignQueue = (queueId: string) => {
         }
 
         if (searchType === SearchType.MANUAL_UPLOAD) {
+            if (!csvData["email"]) {
+                return;
+            }
             await CampaignUrlModel.findOneAndUpdate({ campaignId: id, url: csvData["email"] }, { emailExtracted: true }, { upsert: true })
             await writeEmailAndPublishToLemlistUsingManualUpload(campaignJson, csvData);
         }
