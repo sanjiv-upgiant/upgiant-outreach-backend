@@ -9,11 +9,7 @@ Only output subject and nothing else.The output should not have the Prefix "Subj
 `
 
 export const subjectUserTemplateString = `
-RecipientName: {recipientName}  
-RecipientBusinessName: {recipientBusinessName}
-RecipientDesignation {recipientDesignation}
-RecipientsCompanyDomainURL: {recipientBusinessDomainURL}
-RecipientsCompanyBusinessSummary: \n{recipientBusinessSummary}\n
+RecipientInformation: {recipientInformation}  
 
 ++++++
 EMAIL BODY: \n {emailBody}

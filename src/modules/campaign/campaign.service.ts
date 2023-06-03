@@ -1,6 +1,6 @@
 
 import IntegrationModel from '../integrations/integration.model';
-import { writeBodyOfEmail } from '../langchain/email';
+import { writeEmailBody } from '../langchain/email';
 import { extractCompanySummaryFromTitleAndBody } from '../langchain/summary';
 import { extractTitleAndText } from '../utils/url';
 import { listModels } from './../../app/openai';
@@ -56,7 +56,7 @@ export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiI
         throw new Error("No contact emails were found. Try using different sender service or select different url")
     }
     console.log(`email found for ${url}. ${JSON.stringify(contactEmail)}`)
-    const emailBody = await writeBodyOfEmail({
+    const emailBody = await writeEmailBody({
         template: templates[0],
         senderInformation,
         recipientInformation: {
@@ -166,6 +166,6 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
         resultsPerPage: limitInt,
         currentPage: pageInt
     };
-
 }
+
 

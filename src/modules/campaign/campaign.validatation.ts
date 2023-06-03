@@ -4,7 +4,11 @@ import { SearchType } from './campaign.interfaces';
 export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
-        urls: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
+        urls: Joi.alternatives().conditional("searchType", {
+            is: (searchType: SearchType) => searchType !== SearchType.MANUAL_UPLOAD,
+            then: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
+            otherwise: Joi.optional()
+        }),
         modelName: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
@@ -15,13 +19,17 @@ export const createCampaignValidation = {
             department: Joi.string().optional().allow(""),
         }).required(),
         searchType: Joi.string().valid(
-            SearchType.CONTACTS,
+            SearchType.MANUAL_UPLOAD,
             SearchType.DOMAINS,
             SearchType.DOMAINS_WITH_SERP
         ).required(),
-        emailSearchServiceIds: Joi.array()
-            .items(Joi.string())
-            .required(),
+        emailSearchServiceIds: Joi.alternatives().conditional("searchType", {
+            is: (searchType: SearchType) => searchType !== SearchType.MANUAL_UPLOAD,
+            then: Joi.array()
+                .items(Joi.string())
+                .required(),
+            otherwise: Joi.optional()
+        }),
         emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),
@@ -44,7 +52,12 @@ export const createCampaignValidation = {
                 body: Joi.string().required(),
                 subject: Joi.string().required()
             }))
-            .required().min(1)
+            .required().min(1),
+        manualUpload: Joi.object({
+            file: Joi.string().required(),
+            selectedColumnNames: Joi.array().items(Joi.string().required()).optional(),
+            mappedEmail: Joi.string().required()
+        }).optional(),
     }),
 };
 
@@ -62,7 +75,7 @@ export const createEmailTemplateValidation = {
             department: Joi.string().optional().allow(""),
         }).required(),
         searchType: Joi.string().valid(
-            SearchType.CONTACTS,
+            SearchType.MANUAL_UPLOAD,
             SearchType.DOMAINS,
             SearchType.DOMAINS_WITH_SERP
         ).required(),

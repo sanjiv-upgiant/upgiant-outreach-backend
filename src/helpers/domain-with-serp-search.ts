@@ -5,7 +5,7 @@ import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
-import { writeBodyOfEmail, writeSubjectOfEmail } from "./../modules/langchain/email";
+import { writeEmailBody, writeEmailSubject } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 import { getEmailFromFirstNameAndLastNameServices } from "./emailFinder";
 
@@ -68,7 +68,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                         recipientEmail: contactEmail["email"],
                         recipientDesignation: employee["position"]
                     }
-                    const emailBody = await writeBodyOfEmail({
+                    const emailBody = await writeEmailBody({
                         modelName,
                         gptModelTemperature,
                         template,
@@ -79,7 +79,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                         openAIApiKey: openAIIntegration.accessToken
                     });
 
-                    const emailSubject = await writeSubjectOfEmail({
+                    const emailSubject = await writeEmailSubject({
                         recipientInformation,
                         emailBody,
                         openAIApiKey: openAIIntegration.accessToken,

@@ -3,9 +3,25 @@ import { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
-import { CampaignRunningStatus } from "./campaign.interfaces";
+import { CampaignRunningStatus, SearchType } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
 import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+
+import multer from "multer";
+import { getCsvDataFromCampaign } from './../../helpers/manual-upload-search';
+import path from 'path';
+
+
+const multerStorage = multer.diskStorage({
+    destination: (_, __, cb) => {
+        cb(null, "public");
+    },
+    filename: (_, file, cb) => {
+        const ext = file.mimetype.split("/")[1];
+        const fileName = `${file.fieldname}-${Date.now()}.${ext}`;
+        cb(null, fileName);
+    },
+});
 
 const limit = "10";
 const jobOptions: JobOptions = {
@@ -21,18 +37,58 @@ export const emailTemplateController = catchAsync(async (req: Request, res: Resp
     res.status(httpStatus.CREATED).send(emailGenerated);
 });
 
+export const uploadCampaignFileController = catchAsync(async (req: Request, res: Response) => {
+
+    const upload = multer({
+        storage: multerStorage,
+        limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+        fileFilter: (_, file, cb) => {
+            if (file.mimetype.split("/")[1] === "csv") {
+                return cb(null, true);
+            } else {
+                return cb(new Error("Only csv upload is supported"));
+            }
+        }
+    });
+
+    await new Promise<void>((resolve, reject) => {
+        upload.single("manualUpload")(req, res, (error) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve();
+            }
+        });
+    });
+    const fileName = req.file?.filename;
+    return res.send({
+        fileName: path.join("public", fileName ?? "")
+    })
+});
+
 export const createCampaignController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const campaign = await createCampaign(req.body, user);
     const { urls = [] } = req.body;
 
     const scrapeQueue = getCampaignQueue(campaign.id);
-    for (const url of urls) {
-        scrapeQueue.add({
-            user,
-            url,
-            campaignJson: campaign.toJSON()
-        }, jobOptions)
+    if (campaign.searchType !== SearchType.MANUAL_UPLOAD) {
+        for (const url of urls) {
+            scrapeQueue.add({
+                url,
+                campaignJson: campaign.toJSON()
+            }, jobOptions)
+        }
+    }
+    else {
+        const csvDataFromList = await getCsvDataFromCampaign(campaign.toJSON());
+        for (const eachCsvData of csvDataFromList) {
+            scrapeQueue.add({
+                campaignJson: campaign.toJSON(),
+                csvData: eachCsvData
+            }, jobOptions)
+
+        }
     }
     res.status(httpStatus.CREATED).send(campaign);
 });

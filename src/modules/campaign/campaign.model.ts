@@ -107,6 +107,11 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: Number,
             default: 0
         },
+        manualUpload: {
+            file: String,
+            selectedColumnNames: [String],
+            mappedEmail: String
+        },
     },
     {
         timestamps: true,

@@ -9,8 +9,8 @@ import {
     SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import { ICampaign } from "./../../../modules/campaign/campaign.interfaces";
-import { humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForSecondPass, humanPromptTemplateStringForThirdPass, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForSecondPass } from "./templates/email.template";
-import { subjectSytemTemplateString, subjectUserTemplateString } from "./templates/subject.template";
+import { humanPromptTemplateStringForInitialOutput, humanPromptTemplateStringForManualUpload, humanPromptTemplateStringForSecondPass, humanPromptTemplateStringForThirdPass, systemPromptTemplateStringForInitialOutput, systemPromptTemplateStringForManualUpload, systemPromptTemplateStringForSecondPass } from "./email-templates/email.template";
+import { subjectSytemTemplateString, subjectUserTemplateString } from "./email-templates/subject.template";
 
 
 export interface ISenderInformation {
@@ -30,7 +30,7 @@ interface IRecipientInformation {
     recipientName?: string,
 }
 
-interface IEmailCampaignArgs {
+interface ICreateEmailBodyArgs {
     template: ICampaign["templates"][0],
     senderInformation: ISenderInformation,
     recipientInformation: IRecipientInformation,
@@ -41,17 +41,34 @@ interface IEmailCampaignArgs {
     modelName?: string,
 }
 
-interface IEmailSubjectArgs {
+interface ICreateEmailBodyArgsManualUpload {
+    template: ICampaign["templates"][0],
+    senderInformation: ISenderInformation,
+    recipientInformation: { [x: string]: any },
+    objective?: string,
+    includeDetails?: string,
+    openAIApiKey: string,
+    gptModelTemperature?: number,
+    modelName?: string,
+
+}
+interface ICreateEmailSubjectArgs {
     recipientInformation: IRecipientInformation,
     emailBody: string,
     openAIApiKey: string,
     gptModelTemperature?: number,
     modelName?: string,
 }
+interface ICreateEmailSubjectArgsManualUpload {
+    recipientInformation: { [x: string]: any },
+    emailBody: string,
+    openAIApiKey: string,
+    gptModelTemperature?: number,
+    modelName?: string,
+}
 
-export const writeSubjectOfEmail = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: IEmailSubjectArgs) => {
+export const writeEmailSubject = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
-
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
@@ -71,7 +88,7 @@ export const writeSubjectOfEmail = async ({ recipientInformation, emailBody, gpt
     return response;
 }
 
-export const writeBodyOfEmail = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0, modelName = "gpt-3.5-turbo" }: IEmailCampaignArgs) => {
+export const writeEmailBody = async ({ template, openAIApiKey, senderInformation, includeDetails = "", recipientInformation, gptModelTemperature = 0, modelName = "gpt-3.5-turbo" }: ICreateEmailBodyArgs) => {
     const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientEmail = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
@@ -126,6 +143,70 @@ export const writeBodyOfEmail = async ({ template, openAIApiKey, senderInformati
 
     return thirdResponse;
 };
+
+export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails, gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation }: ICreateEmailBodyArgsManualUpload) => {
+    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
+
+    const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
+
+    const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForManualUpload);
+    const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForManualUpload);
+    const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
+
+    const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
+
+    const initialResponse = await initialEmailChain.predict({
+        template: `${template.body}`,
+        recipientInformation: JSON.stringify(recipientInformation),
+        sendersName,
+        sendersEmail,
+        sendersCompanyDomainURL,
+        sendersCompanyBusinessSummary,
+        sendersProductService,
+        includeDetails,
+    });
+
+    const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
+    const humanPromptTemplateForSecondPass = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
+    const chatPromptTemplateForSecondPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForSecondPass, humanPromptTemplateForSecondPass]);
+    const secondEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateForSecondPass })
+
+    const secondResponse = await secondEmailChain.predict({
+        email: initialResponse
+    })
+
+
+    const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
+    const humanPromptTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
+    const assistantTemplateForAnotherFinal = AIMessagePromptTemplate.fromTemplate(`${secondResponse}`)
+    const humanTemplateForAnotherFinal = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForThirdPass)
+
+    const chatPromptTemplateThirdPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForAnotherFinal, humanPromptTemplateForAnotherFinal, assistantTemplateForAnotherFinal, humanTemplateForAnotherFinal]);
+
+    const thirdEmailChain = new LLMChain({ llm, prompt: chatPromptTemplateThirdPass })
+
+    const thirdResponse = await thirdEmailChain.predict({
+        email: secondResponse
+    })
+
+    return thirdResponse;
+}
+
+export const writeEmailSubjectForManualUpload = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgsManualUpload) => {
+
+    const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
+    const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
+    const humanPromptTemplate = HumanMessagePromptTemplate.fromTemplate(subjectUserTemplateString);
+    const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate]);
+    const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
+
+    const response = await initialEmailChain.predict({
+        recipientInformation: JSON.stringify(recipientInformation),
+        emailBody
+    })
+
+    return response;
+}
 
 
 

@@ -12,8 +12,8 @@ export enum CampaignRunningStatus {
 }
 
 export enum SearchType {
-    CONTACTS = "CONTACTS",
     DOMAINS = "DOMAINS",
+    MANUAL_UPLOAD = "MANUAL_UPLOAD",
     DOMAINS_WITH_SERP = "DOMAINS_WITH_GOOGLE_SEARCH",
 }
 
@@ -63,7 +63,12 @@ export interface ICampaign {
     emailsClicked: number,
     emailsReplied: number,
     emailsBounced: number,
-    emailsInterested: number
+    emailsInterested: number,
+    manualUpload: {
+        file: string,
+        selectedColumnNames: string[],
+        mappedEmail: string
+    },
 }
 
 export enum UrlStatus {

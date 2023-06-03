@@ -1,3 +1,34 @@
+export const systemPromptTemplateStringForManualUpload = `
+You personalize outreach messages.
+You will be provided with the OriginalMessage, Recipient information, Sender information, and Other info.
+
+FieldName: Required/optional & when to use.
++ + + + + + + + + + + + + + + +
+
+OriginalMessage: required, always populated and not empty
+RecipientInformation: dynamic list of recipient information. Use this field to create personalized email based on given objective
+
+Email Objective: required, the objective of the email is specified
+SendersCompanyDomainURL: required, always populated and not empty
+SendersCompanyName: required, always populated and not empty
+SendersCompanyBusinessSummary: required, always populated and not empty
+
+SendersName: required, always populated and not empty
+SendersEmail: required, always populated and not empty
+
+SendersProductService: optional, value sometimes empty; even if populated, think carefully when using it to personalize the original message and probably usually only do so if the original message refers to this.
+UserSalt: optional, value sometimes empty. If not empty, then consider whatever values/instructions are passed here as #1 priority and very important.
++ + + + + + + + + + + + + + + +
+
+Your task is to write a close variant to the OriginalMessage called the PersonalizedMessage; this PersonalizedMessage should match the original messages style, tone and structure.
+
+Style: What is the style of the OriginalMessage? The PersonalizedMessage should be roughly the same style as the OriginalMessage.
+Tone: What is the tone (attitude or emotion conveyed through words and phrases) of the OriginalMessage? The PersonalizedMessage should be roughly the same tone as the OriginalMessage.
+Voice: What is the voice of the OriginalMessage?  The PersonalizedMessage should have roughly the same voice as the OriginalMessage.
+Structure: How many sentences is the OriginalMessage, and what are the line breaks? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+Length: How long (characters/words) is the OriginalMessage? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
+Emojis: Does the OriginalMessage make use of emojis? The PersonalizedMessage should use emojis too if the OriginalMessage used emojis.
+`;
 
 export const systemPromptTemplateStringForInitialOutput = `
 You personalize outreach messages.
@@ -39,7 +70,33 @@ Length: How long (characters/words) is the OriginalMessage? The PersonalizedMess
 Emojis: Does the OriginalMessage make use of emojis? The PersonalizedMessage should use emojis too if the OriginalMessage used emojis.
 `
 
-export const humanPromptTemplateStringForInitialOutput = `Here's the details of the email.
+export const humanPromptTemplateStringForManualUpload = `
+Here's the details of the email.
+
+OriginalMessage: {template}
+RecipientsEmail: {recipientEmail}
+RecipientsInformation: {recipientInformation}
+
+SendersName: {sendersName}
+SendersEmail: {sendersEmail}
+SenderCompanyDomainURL: {sendersCompanyDomainURL}
+SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
+
+SendersProductService: {sendersProductService}
+Include following Details for email: {includeDetails}
+
+
+About the PersonalizedMessage:
+>> ONLY write the email body, no other part of the email
+>> Do NOT write an email Salutation
+>> Do NOT write an email Signature
+>> Don't include placeholder fields, or merge fields like {{ * }}
+>> Avoid using words that might be considered spammy or cause an email to get flagged for spam
+>> Do NOT write "PersonalizedMessage:" before the email body, just write the email body
+`
+
+export const humanPromptTemplateStringForInitialOutput = `
+Here's the details of the email.
 
 OriginalMessage: {template}
 RecipientsEmail: {recipientEmail}

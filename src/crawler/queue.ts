@@ -9,96 +9,105 @@ import { extractCompanySummaryFromTitleAndBody } from './../modules/langchain/su
 import { cleanupAllAxiosInstances } from './../modules/limitedAxios';
 import { extractTitleAndText } from './../modules/utils/url';
 import scrape from './scraper';
+import { writeEmailAndPublishToLemlistUsingManualUpload } from './../helpers/manual-upload-search';
 
 const getCampaignQueue = (queueId: string) => {
     const scrapeQueue = new Queue(queueId, { redis: { port: 6379, host: '127.0.0.1' } });
-    scrapeQueue.on('completed', (job) => {
-        console.log(`Job ${job.id} completed with result for ${queueId}`);
-        cleanupAllAxiosInstances();
-        CampaignModel.findByIdAndUpdate(queueId, {
+    scrapeQueue.on('completed', async (job) => {
+        await CampaignModel.findByIdAndUpdate(queueId, {
             status: CampaignStatus.FINISHED
         })
+        cleanupAllAxiosInstances();
+        console.log(`Job ${job.id} completed with result for ${queueId}`);
     });
 
-    scrapeQueue.on('failed', (job, err) => {
+    scrapeQueue.on('failed', async (job, err) => {
         const { url } = job.data;
-        console.log(`Job ${job.id} with url ${url} failed with error ${err}`);
 
-        CampaignUrlModel.findOne({ url, campaignId: queueId }, {
+        await CampaignUrlModel.findOne({ url, campaignId: queueId }, {
             error: true,
             errorReason: `${err?.message}. Something went wrong`
         })
 
+        console.log(`Job ${job.id} with url ${url} failed with error ${err}`);
     });
 
     scrapeQueue.process(async (job) => {
-        const { url, campaignJson } = job.data;
+        const { url, campaignJson, csvData } = job.data;
         const {
             id,
             searchType,
             openAiIntegrationId
         } = campaignJson as ICampaignDoc
 
-        await CampaignUrlModel.findOneAndUpdate({ campaignId: id, url }, {
-            campaignId: id,
-            url
-        },
-            { upsert: true }
-        );
+
+        if (searchType !== SearchType.MANUAL_UPLOAD) {
+            await CampaignUrlModel.findOneAndUpdate({ campaignId: id, url }, {
+                campaignId: id,
+                url
+            },
+                { upsert: true }
+            );
 
 
-        let title = "";
-        let body = "";
-        let status = UrlStatus.QUEUED;
-        let urlFromDatabase = await UrlModel.findOne({ url });
-        if (urlFromDatabase?.status === UrlStatus.SUMMARY_EXTRACTED) {
-            title = urlFromDatabase.title;
-            body = urlFromDatabase.body;
-            status = urlFromDatabase.status;
-        }
-        else {
-            const html = await scrape(url);
-            const { title: urlTitle, body: urlBody } = extractTitleAndText(html);
-            title = urlTitle;
-            body = urlBody;
-            urlFromDatabase = await UrlModel.findOneAndUpdate({ url }, {
-                html,
-                url,
-                title: urlTitle,
-                body: urlBody,
-                status: UrlStatus.SUMMARY_EXTRACTED
-            }, {
-                upsert: true,
-                new: true
-            });
-        }
+            let title = "";
+            let body = "";
+            let status = UrlStatus.QUEUED;
+            let urlFromDatabase = await UrlModel.findOne({ url });
+            if (urlFromDatabase?.status === UrlStatus.SUMMARY_EXTRACTED) {
+                title = urlFromDatabase.title;
+                body = urlFromDatabase.body;
+                status = urlFromDatabase.status;
+            }
+            else {
+                const html = await scrape(url);
+                const { title: urlTitle, body: urlBody } = extractTitleAndText(html);
+                title = urlTitle;
+                body = urlBody;
+                urlFromDatabase = await UrlModel.findOneAndUpdate({ url }, {
+                    html,
+                    url,
+                    title: urlTitle,
+                    body: urlBody,
+                    status: UrlStatus.SUMMARY_EXTRACTED
+                }, {
+                    upsert: true,
+                    new: true
+                });
+            }
 
-        if (!urlFromDatabase || !title || !body) {
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId: campaignJson.id }, {
-                error: true,
-                errorReason: "Couldn't extract title and body"
-            });
-            return;
-        }
-
-        if (status !== UrlStatus.SUMMARY_EXTRACTED) {
-            const openAi = await IntegrationModel.findById(openAiIntegrationId);
-            if (!openAi) {
+            if (!urlFromDatabase || !title || !body) {
+                await CampaignUrlModel.findOneAndUpdate({ url, campaignId: campaignJson.id }, {
+                    error: true,
+                    errorReason: "Couldn't extract title and body"
+                });
                 return;
             }
-            const info = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
-            await UrlModel.findOneAndUpdate({ url }, {
-                info,
-                status: UrlStatus.SUMMARY_EXTRACTED
-            });
-        }
+
+            if (status !== UrlStatus.SUMMARY_EXTRACTED) {
+                const openAi = await IntegrationModel.findById(openAiIntegrationId);
+                if (!openAi) {
+                    return;
+                }
+                const info = await extractCompanySummaryFromTitleAndBody(title, body, openAi.accessToken)
+                await UrlModel.findOneAndUpdate({ url }, {
+                    info,
+                    status: UrlStatus.SUMMARY_EXTRACTED
+                });
+            }
 
 
-        if (searchType === SearchType.DOMAINS) {
-            await searchWithDomain(campaignJson, urlFromDatabase);
+            if (searchType === SearchType.DOMAINS) {
+                await searchWithDomain(campaignJson, urlFromDatabase);
+            }
+            else if (searchType === SearchType.DOMAINS_WITH_SERP) {
+                await searchWithSerpAndDomain(campaignJson, urlFromDatabase);
+            }
         }
-        else if (searchType === SearchType.DOMAINS_WITH_SERP) {
-            await searchWithSerpAndDomain(campaignJson, urlFromDatabase);
+
+        if (searchType === SearchType.MANUAL_UPLOAD) {
+            await CampaignUrlModel.findOneAndUpdate({ campaignId: id, url: csvData["email"] }, { emailExtracted: true }, { upsert: true })
+            await writeEmailAndPublishToLemlistUsingManualUpload(campaignJson, csvData);
         }
 
     });
@@ -106,8 +115,5 @@ const getCampaignQueue = (queueId: string) => {
 
     return scrapeQueue;
 }
-
-
-
 
 export default getCampaignQueue;

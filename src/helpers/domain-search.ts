@@ -3,7 +3,7 @@ import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
 import IntegrationModel from "./../modules/integrations/integration.model";
-import { writeBodyOfEmail, writeSubjectOfEmail } from "./../modules/langchain/email";
+import { writeEmailBody, writeEmailSubject } from "./../modules/langchain/email";
 import { getEmailFromEmailFinderServices } from './emailFinder';
 
 export interface IContactEmail {
@@ -50,7 +50,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 recipientDesignation: contactEmail["position"],
                 recipientName: contactEmail["firstName"] ?? ""
             }
-            const emailBody = await writeBodyOfEmail({
+            const emailBody = await writeEmailBody({
                 template,
                 senderInformation,
                 recipientInformation,
@@ -61,7 +61,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
                 modelName
             });
 
-            const emailSubject = await writeSubjectOfEmail({
+            const emailSubject = await writeEmailSubject({
                 recipientInformation,
                 emailBody,
                 openAIApiKey: openAIIntegration.accessToken,
