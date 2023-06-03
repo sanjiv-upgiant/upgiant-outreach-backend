@@ -1,3 +1,4 @@
+import { writeEmailBodyUsingManualData } from './../../modules/langchain/email';
 
 import IntegrationModel from '../integrations/integration.model';
 import { writeEmailBody } from '../langchain/email';
@@ -8,14 +9,16 @@ import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist'
 import scrape from './../../crawler/scraper';
 import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
 import UrlModel, { CampaignUrlModel } from './Url.model';
-import { ICampaign, UrlStatus } from './campaign.interfaces';
+import { ICampaign, SearchType, UrlStatus } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
 
 interface ICreateTestEmailCampaignArgs extends ICampaign {
-    url: string
+    url: string,
+    email?: string,
+    recipientInformation?: any
 }
 
-export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters }: ICreateTestEmailCampaignArgs) => {
+export const createTestEmailFromEmailTemplate = async ({ searchType, templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters, email, recipientInformation }: ICreateTestEmailCampaignArgs) => {
     const openAi = await IntegrationModel.findById(openAiIntegrationId);
 
     if (!templates?.[0]) {
@@ -23,6 +26,28 @@ export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiI
     }
     if (!openAi) {
         throw new Error("No Integration not found")
+    }
+
+    if (searchType === SearchType.MANUAL_UPLOAD) {
+        if (!email || !recipientInformation) {
+            return;
+        }
+        for (const template of templates) {
+            const emailBody = await writeEmailBodyUsingManualData({
+                email,
+                template,
+                senderInformation,
+                recipientInformation,
+                objective,
+                includeDetails,
+                openAIApiKey: openAi.accessToken,
+                gptModelTemperature,
+                modelName
+            });
+
+            return emailBody;
+        }
+        return;
     }
 
     const urlFromDb = await UrlModel.findOne({ url });
@@ -55,7 +80,6 @@ export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiI
     if (!contactEmail) {
         throw new Error("No contact emails were found. Try using different sender service or select different url")
     }
-    console.log(`email found for ${url}. ${JSON.stringify(contactEmail)}`)
     const emailBody = await writeEmailBody({
         template: templates[0],
         senderInformation,
@@ -72,7 +96,6 @@ export const createTestEmailFromEmailTemplate = async ({ templates, url, openAiI
         gptModelTemperature,
         modelName
     });
-    console.log(emailBody, 'is returned for url ${url}');
     return emailBody;
 }
 

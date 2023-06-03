@@ -64,7 +64,11 @@ export const createCampaignValidation = {
 export const createEmailTemplateValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
-        urls: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
+        urls: Joi.alternatives().conditional("searchType", {
+            is: Joi.not(SearchType.MANUAL_UPLOAD),
+            then: Joi.array().items(Joi.string().uri().required()).min(1).max(5000).required(),
+            otherwise: Joi.optional()
+        }),
         modelName: Joi.string().required(),
         objective: Joi.string().required(),
         audienceFilters: Joi.object().keys({
@@ -79,9 +83,13 @@ export const createEmailTemplateValidation = {
             SearchType.DOMAINS,
             SearchType.DOMAINS_WITH_SERP
         ).required(),
-        emailSearchServiceIds: Joi.array()
-            .items(Joi.string())
-            .required(),
+        emailSearchServiceIds: Joi.alternatives().conditional("searchType", {
+            is: (searchType: SearchType) => searchType !== SearchType.MANUAL_UPLOAD,
+            then: Joi.array()
+                .items(Joi.string())
+                .required(),
+            otherwise: Joi.optional()
+        }),
         emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),
@@ -105,6 +113,13 @@ export const createEmailTemplateValidation = {
                 subject: Joi.string().required()
             }))
             .required().min(1),
-        url: Joi.string().required()
+        url: Joi.string().required(),
+        email: Joi.string().required(),
+        recipientInformation: Joi.any().optional(),
+        manualUpload: Joi.object({
+            file: Joi.string().required(),
+            selectedColumnNames: Joi.array().items(Joi.string().required()).optional(),
+            mappedEmail: Joi.string().required()
+        }).optional(),
     }),
 };

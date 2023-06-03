@@ -6,16 +6,18 @@ import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { writeEmailBodyUsingManualData, writeEmailSubjectForManualUpload } from "./../modules/langchain/email";
 
+
+interface ICsvData {
+    [x: string]: any
+
+}
+
 export const getCsvDataFromCampaign = async (campaignJson: ICampaign) => {
     const { manualUpload } = campaignJson;
     const result = await parseCsv(manualUpload);
     return result;
 }
 
-interface ICsvData {
-    [x: string]: any
-
-}
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
     const email = csvData["email"];
