@@ -105,7 +105,7 @@ const getCampaignQueue = (queueId: string) => {
             }
         }
 
-        if (searchType === SearchType.MANUAL_UPLOAD) {
+        else if (searchType === SearchType.MANUAL_UPLOAD) {
             if (!csvData["email"]) {
                 return;
             }

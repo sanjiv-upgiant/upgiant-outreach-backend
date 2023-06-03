@@ -72,22 +72,23 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     const { urls = [] } = req.body;
 
     const scrapeQueue = getCampaignQueue(campaign.id);
-    if (campaign.searchType !== SearchType.MANUAL_UPLOAD) {
+    if (campaign.searchType === SearchType.MANUAL_UPLOAD) {
+        const csvDataFromList = await getCsvDataFromCampaign(campaign.toJSON());
+        for (const eachCsvData of csvDataFromList) {
+            scrapeQueue.add({
+                campaignJson: campaign.toJSON(),
+                csvData: eachCsvData,
+                url: eachCsvData["email"]
+            }, jobOptions)
+
+        }
+    }
+    else {
         for (const url of urls) {
             scrapeQueue.add({
                 url,
                 campaignJson: campaign.toJSON()
             }, jobOptions)
-        }
-    }
-    else {
-        const csvDataFromList = await getCsvDataFromCampaign(campaign.toJSON());
-        for (const eachCsvData of csvDataFromList) {
-            scrapeQueue.add({
-                campaignJson: campaign.toJSON(),
-                csvData: eachCsvData
-            }, jobOptions)
-
         }
     }
     res.status(httpStatus.CREATED).send(campaign);
