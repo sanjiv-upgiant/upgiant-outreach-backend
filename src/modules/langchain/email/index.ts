@@ -170,6 +170,8 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
         objective,
     });
 
+    console.log(initialResponse, 'initial Response');
+
     const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
     const humanPromptTemplateForSecondPass = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
     const chatPromptTemplateForSecondPass = ChatPromptTemplate.fromPromptMessages([systemPromptTemplateForSecondPass, humanPromptTemplateForSecondPass]);
@@ -178,6 +180,8 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const secondResponse = await secondEmailChain.predict({
         email: initialResponse
     })
+
+    console.log(secondResponse, "Second response");
 
 
     const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
@@ -192,6 +196,10 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const thirdResponse = await thirdEmailChain.predict({
         email: secondResponse
     })
+
+    console.log(thirdResponse, "third response");
+
+
 
     return thirdResponse;
 }
