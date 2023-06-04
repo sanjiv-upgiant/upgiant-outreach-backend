@@ -149,7 +149,6 @@ export const writeEmailBody = async ({ template, openAIApiKey, senderInformation
 export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails = "", gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation, objective, email }: ICreateEmailBodyArgsManualUpload) => {
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
 
-
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForManualUpload);
@@ -157,19 +156,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
 
     const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
-
-    console.log({
-        template: `${template.body}`,
-        email,
-        recipientInformation: JSON.stringify(recipientInformation),
-        sendersName,
-        sendersEmail,
-        sendersCompanyDomainURL,
-        sendersCompanyBusinessSummary,
-        sendersProductService,
-        includeDetails,
-        objective,
-    })
 
     const initialResponse = await initialEmailChain.predict({
         template: `${template.body}`,
@@ -184,7 +170,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
         objective,
     });
 
-    console.log(initialResponse, 'initial Response');
 
     const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
     const humanPromptTemplateForSecondPass = HumanMessagePromptTemplate.fromTemplate(humanPromptTemplateStringForSecondPass);
@@ -195,7 +180,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
         email: initialResponse
     })
 
-    console.log(secondResponse, "Second response");
 
 
     const systemPromptTemplateForAnotherFinal = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForSecondPass);
@@ -210,10 +194,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const thirdResponse = await thirdEmailChain.predict({
         email: secondResponse
     })
-
-    console.log(thirdResponse, "third response");
-
-
 
     return thirdResponse;
 }
