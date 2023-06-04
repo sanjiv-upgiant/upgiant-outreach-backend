@@ -22,6 +22,7 @@ const getCampaignQueue = (queueId: string) => {
 
         const allJobsProcessed = (completedCount + failedCount) === job.id;
         if (allJobsProcessed) {
+            console.log(`All Job Completed`);
             cleanupAllAxiosInstances();
             await CampaignModel.findByIdAndUpdate(queueId, {
                 status: CampaignStatus.FINISHED,
