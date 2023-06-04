@@ -13,11 +13,14 @@ import { writeEmailAndPublishToLemlistUsingManualUpload } from './../helpers/man
 
 const getCampaignQueue = (queueId: string) => {
     const scrapeQueue = new Queue(queueId, { redis: { port: 6379, host: '127.0.0.1' } });
-    scrapeQueue.on('completed', async (job) => {
+    scrapeQueue.on('global:completed', async () => {
         await CampaignModel.findByIdAndUpdate(queueId, {
-            status: CampaignStatus.FINISHED
+            status: CampaignStatus.FINISHED,
         })
         cleanupAllAxiosInstances();
+        console.log(`All Job completed with result for ${queueId}`);
+    });
+    scrapeQueue.on('completed', async (job) => {
         console.log(`Job ${job.id} completed with result for ${queueId}`);
     });
 
