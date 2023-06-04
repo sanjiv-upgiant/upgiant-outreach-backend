@@ -32,6 +32,7 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
         if (!email || !recipientInformation) {
             return;
         }
+        console.log("Manual Update preview");
         for (const template of templates) {
             const emailBody = await writeEmailBodyUsingManualData({
                 email,
@@ -44,6 +45,8 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
                 gptModelTemperature,
                 modelName
             });
+
+            console.log(emailBody, 'email body');
 
             return emailBody;
         }
