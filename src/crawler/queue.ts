@@ -24,12 +24,12 @@ const getCampaignQueue = (queueId: string) => {
     scrapeQueue.on('failed', async (job, err) => {
         const { url } = job.data;
 
-        await CampaignUrlModel.findOne({ url, campaignId: queueId }, {
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId: queueId }, {
             error: true,
             errorReason: `${err?.message}. Something went wrong`
         })
 
-        console.log(`Job ${job.id} with url ${url} failed with error ${err}`);
+        console.log(`Job ${job.id} with url ${url} of campaignId ${queueId} failed with error ${err}`);
     });
 
     scrapeQueue.process(async (job) => {
