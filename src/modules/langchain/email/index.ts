@@ -158,6 +158,19 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
 
     const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
 
+    console.log({
+        template: `${template.body}`,
+        email,
+        recipientInformation: JSON.stringify(recipientInformation),
+        sendersName,
+        sendersEmail,
+        sendersCompanyDomainURL,
+        sendersCompanyBusinessSummary,
+        sendersProductService,
+        includeDetails,
+        objective,
+    })
+
     const initialResponse = await initialEmailChain.predict({
         template: `${template.body}`,
         email,
