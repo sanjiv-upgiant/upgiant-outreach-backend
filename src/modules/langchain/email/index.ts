@@ -149,6 +149,8 @@ export const writeEmailBody = async ({ template, openAIApiKey, senderInformation
 export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails, gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation, objective, email }: ICreateEmailBodyArgsManualUpload) => {
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
 
+    console.log("HERE");
+
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
 
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(systemPromptTemplateStringForManualUpload);
@@ -156,6 +158,7 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     const chatPromptTemplate = ChatPromptTemplate.fromPromptMessages([systemPromptTemplate, humanPromptTemplate],);
 
     const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
+    console.log("TRYING");
 
     const initialResponse = await initialEmailChain.predict({
         template: `${template.body}`,
