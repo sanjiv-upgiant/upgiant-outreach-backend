@@ -1,6 +1,12 @@
 import Joi from 'joi';
 import { SearchType } from './campaign.interfaces';
 
+export const createEmailTemplateFetchValidation = {
+    body: Joi.object().keys({
+        objective: Joi.string().required()
+    })
+}
+
 export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),

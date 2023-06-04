@@ -18,6 +18,27 @@ interface ICreateTestEmailCampaignArgs extends ICampaign {
     recipientInformation?: any
 }
 
+interface IGetEmailTemplate {
+    objective: string;
+    page: string;
+}
+
+export const getEmailTemplates = async ({ objective, page }: IGetEmailTemplate) => {
+    const pageInt = parseInt(page);
+    const limitInt = 25;
+    const campaigns = await CampaignModel.find({ objective }).sort({ "_id": -1 })
+        .skip((pageInt - 1) * limitInt)
+        .limit(limitInt);
+
+    const res = campaigns.map((campaign) => ({ ...campaign.toJSON() })).map((campaign) => ({
+        objective: campaign.objective,
+        templates: campaign.templates,
+        id: campaign.id
+    }));
+
+    return res;
+}
+
 export const createTestEmailFromEmailTemplate = async ({ searchType, templates, url, openAiIntegrationId, senderInformation, objective, includeDetails, gptModelTemperature = 0, modelName, emailSearchServiceIds, audienceFilters, email, recipientInformation }: ICreateTestEmailCampaignArgs) => {
     const openAi = await IntegrationModel.findById(openAiIntegrationId);
 
@@ -44,8 +65,6 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
                 gptModelTemperature,
                 modelName
             });
-
-            console.log(emailBody, 'email body');
 
             return emailBody;
         }

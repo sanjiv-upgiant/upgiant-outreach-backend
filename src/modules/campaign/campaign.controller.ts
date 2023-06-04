@@ -5,7 +5,7 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus, SearchType } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 import multer from "multer";
 import path from 'path';
@@ -31,6 +31,12 @@ const jobOptions: JobOptions = {
         delay: 10000
     }
 }
+
+export const getEmailTemplatesController = catchAsync(async (req: Request, res: Response) => {
+    const { page = "1" } = req.query as { page: string }
+    const templates = await getEmailTemplates({ objective: req.body.objective, page });
+    return res.status(httpStatus.OK).send(templates);
+})
 
 export const emailTemplateController = catchAsync(async (req: Request, res: Response) => {
     const emailGenerated = await createTestEmailFromEmailTemplate(req.body);
