@@ -48,6 +48,7 @@ export interface ICampaign {
     serpApiId: string,
     outreachAgentId: string,
     includeDetails: string,
+    emailVerifierId: string,
     openAiIntegrationId: string,
     emailSearchServiceCampaignId: string,
     senderInformation: {

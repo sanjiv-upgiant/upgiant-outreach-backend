@@ -6,6 +6,7 @@ import { IIntegration, IntegrationTypes } from "./integration.interfaces";
 import IntegrationModel from "./integration.model";
 import { getApolloHealth } from "./../../app/email-search/apollo";
 import { testHunterApi } from "./../../app/email-search/hunter";
+import { getEmailableHealth } from "./../../app/email-verifier/emailable";
 
 export const getCampaignList = async (integrationId: string, user: string, offset = "") => {
     const integration = await IntegrationModel.findOne({ _id: integrationId, user });
@@ -36,6 +37,10 @@ export const addNewIntegration = async (integration: IIntegration, user: string)
         if (!res?.search_metadata) {
             throw Error("Invalid key");
         }
+    }
+
+    else if (integration.type === IntegrationTypes.EMAILABLE) {
+        await getEmailableHealth(integration.accessToken);
     }
 
     const createdIntegration = await IntegrationModel.create({ ...integration, user, meta: {} });

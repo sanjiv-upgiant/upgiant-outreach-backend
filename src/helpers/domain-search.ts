@@ -5,6 +5,7 @@ import { IntegrationTypes } from "./../modules/integrations/integration.interfac
 import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeEmailBody, writeEmailSubject } from "./../modules/langchain/email";
 import { getEmailFromEmailFinderServices } from './emailFinder';
+import { getVerifiedEmailAndFirstName } from "./emailVerifier";
 
 export interface IContactEmail {
     email: string,
@@ -16,7 +17,7 @@ export interface IContactEmail {
 }
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
+    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName, emailVerifierId } = campaign;
     const { url, info } = websiteUrlInfo;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
@@ -26,12 +27,22 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
     const contactEmails = await getEmailFromEmailFinderServices({ integrationIds: emailSearchServiceIds, audienceFilters, url });
 
-    if (!contactEmails?.length) {
+    if (!contactEmails || !contactEmails?.length) {
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
             error: true,
             errorReason: "0 emails found"
         });
         return;
+    }
+
+
+    if (emailVerifierId && contactEmails?.[0]) {
+        const firstContactEmail = contactEmails[0].email;
+        const verifiedResponse = await getVerifiedEmailAndFirstName(firstContactEmail, emailVerifierId);
+        if (verifiedResponse.status !== "deliverable") {
+            throw new Error(`${firstContactEmail} cannot be verified as it is in "${verifiedResponse.status}" state.`)
+        }
+        contactEmails[0].firstName = contactEmails[0].firstName ?? verifiedResponse.firstName ?? "";
     }
 
     await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {

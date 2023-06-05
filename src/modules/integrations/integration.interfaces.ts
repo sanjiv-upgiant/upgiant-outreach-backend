@@ -7,7 +7,8 @@ export enum IntegrationTypes {
     HUNTER = "HUNTER",
     APOLLO = "APOLLO",
     LEMLIST = "LEMLIST",
-    SERPAPI = "SERPAPI"
+    SERPAPI = "SERPAPI",
+    EMAILABLE = "EMAILABLE"
 }
 
 export interface IIntegration {

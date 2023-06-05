@@ -5,6 +5,8 @@ import { IntegrationTypes } from "./../modules/integrations/integration.interfac
 import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { writeEmailBodyUsingManualData, writeEmailSubjectForManualUpload } from "./../modules/langchain/email";
+import { getVerifiedEmailAndFirstName } from "./emailVerifier";
+import { IEmailVerifierResponse } from "./../app/email-verifier/emailable";
 
 
 interface ICsvData {
@@ -21,17 +23,26 @@ export const getCsvDataFromCampaign = async (campaignJson: ICampaign) => {
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
     const email = csvData["email"];
-    const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, objective, includeDetails, senderInformation, id, emailSearchServiceCampaignId } = campaignJson;
+    const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, objective, includeDetails, senderInformation, id, emailSearchServiceCampaignId, emailVerifierId } = campaignJson;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
     if (!outreachIntegration || !openAIIntegration) {
         return;
     }
+
+    let verifiedResponse: IEmailVerifierResponse | null = null;
+    if (emailVerifierId) {
+        verifiedResponse = await getVerifiedEmailAndFirstName(email, emailVerifierId);
+        if (verifiedResponse.status !== "deliverable") {
+            throw new Error(`${email} cannot be verified as it is in "${verifiedResponse.status}" state.`)
+        }
+    }
+
     const emailBodies: string[] = [];
     const emailSubjects: string[] = [];
     for (const template of templates) {
         const recipientInformation = {
-            recipientEmail: email,
+            ...csvData,
         }
         const emailBody = await writeEmailBodyUsingManualData({
             email,
@@ -67,7 +78,7 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
             const rightOBody: { [x: string]: string } = {
                 rightOCompanyName: "",
                 rightODesignation: "",
-                rightOFirstName: "",
+                rightOFirstName: verifiedResponse?.firstName ?? "",
                 rightOLastName: "",
             };
             for (let i = 0; i < emailBodies.length; i++) {

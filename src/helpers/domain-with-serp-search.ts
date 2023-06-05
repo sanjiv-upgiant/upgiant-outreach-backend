@@ -8,6 +8,7 @@ import IntegrationModel from "./../modules/integrations/integration.model";
 import { writeEmailBody, writeEmailSubject } from "./../modules/langchain/email";
 import { extractEmployeesInformationFromSerp } from "./../modules/langchain/serp";
 import { getEmailFromFirstNameAndLastNameServices } from "./emailFinder";
+import { getVerifiedEmailAndFirstName } from "./emailVerifier";
 
 export interface IEmailFinderSearchResponse {
     firstName: string,
@@ -16,7 +17,7 @@ export interface IEmailFinderSearchResponse {
 }
 
 export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, audienceFilters, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
+    const { id: campaignId, audienceFilters, emailVerifierId, objective, includeDetails, emailSearchServiceCampaignId, serpApiId, emailSearchServiceIds, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName } = campaign;
     const { url, info } = websiteUrlInfo;
 
     const serpApiIntegration = await IntegrationModel.findById(serpApiId);
@@ -24,7 +25,6 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
 
     if (!outreachIntegration || !serpApiIntegration || !openAIIntegration) {
-        console.log("returning,");
         return;
     }
 
@@ -53,6 +53,13 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             }
         }
         else {
+            if (emailVerifierId && contactEmails.emails[0]) {
+                const firstContactEmail = contactEmails.emails[0].email;
+                const verifiedResponse = await getVerifiedEmailAndFirstName(firstContactEmail, emailVerifierId);
+                if (verifiedResponse.status !== "deliverable") {
+                    throw new Error(`${firstContactEmail} cannot be verified as it is in "${verifiedResponse.status}" state.`)
+                }
+            }
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 emailExtracted: true,
                 contactEmails

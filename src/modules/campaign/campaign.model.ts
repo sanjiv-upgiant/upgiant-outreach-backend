@@ -57,6 +57,9 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: [String],
             required: true
         },
+        emailVerifierId: {
+            type: String
+        },
         emailSearchServiceCampaignId: {
             type: String,
             required: true

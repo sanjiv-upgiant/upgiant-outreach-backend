@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { SearchType } from './campaign.interfaces';
 
-export const createEmailTemplateFetchValidation = {
+export const getEmailTemplatesFromObjectiveValidation = {
     body: Joi.object().keys({
         objective: Joi.string().required()
     })
@@ -36,6 +36,7 @@ export const createCampaignValidation = {
                 .required(),
             otherwise: Joi.optional()
         }),
+        emailVerifierId: Joi.string().optional(),
         emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),
@@ -67,7 +68,7 @@ export const createCampaignValidation = {
     }),
 };
 
-export const createEmailTemplateValidation = {
+export const getEmailFromEmailTemplateValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
         urls: Joi.alternatives().conditional("searchType", {
