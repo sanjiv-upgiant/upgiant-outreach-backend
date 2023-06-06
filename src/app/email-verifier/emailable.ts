@@ -2,7 +2,7 @@ import { IntegrationOutputModel } from "./../../modules/integrations/integration
 import axios from "axios";
 
 export interface IEmailVerifierResponse {
-    status: "deliverable" | "undeliverable" | "risky" | "unknown",
+    status: "deliverable" | "undeliverable" | "risky" | "unknown" | "undefined",
     email: string,
     firstName?: string
 }

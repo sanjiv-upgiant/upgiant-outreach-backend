@@ -59,7 +59,6 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
                 template,
                 senderInformation,
                 recipientInformation,
-                objective,
                 includeDetails,
                 openAIApiKey: openAi.accessToken,
                 gptModelTemperature,
@@ -194,7 +193,7 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
         queryFilter["emailExtracted"] = true;
     }
     else if (filter === "incomplete") {
-        queryFilter["emailExtracted"] = false;
+        queryFilter["error"] = true;
     }
 
 

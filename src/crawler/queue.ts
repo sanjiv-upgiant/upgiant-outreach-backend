@@ -16,13 +16,18 @@ const getCampaignQueue = (queueId: string) => {
     scrapeQueue.on('completed', async (job) => {
         console.log(`Job ${job.id} completed with result for ${queueId}`);
 
-        const [completedCount, failedCount] = await Promise.all([
-            scrapeQueue.getCompletedCount(),
-            scrapeQueue.getFailedCount(),
+        const [waitingCount] = await Promise.all([
+            scrapeQueue.getWaitingCount(),
         ]);
 
-        const allJobsProcessed = (completedCount + failedCount) === job.id;
-        if (allJobsProcessed) {
+        const { url } = job.data;
+
+        await CampaignUrlModel.findOneAndUpdate({ url, campaignId: queueId }, {
+            error: false,
+            errorReason: ``
+        })
+
+        if (waitingCount === 0) {
             console.log(`All Job Completed`);
             cleanupAllAxiosInstances();
             await CampaignModel.findByIdAndUpdate(queueId, {
@@ -33,7 +38,6 @@ const getCampaignQueue = (queueId: string) => {
 
     scrapeQueue.on('failed', async (job, err) => {
         const { url } = job.data;
-
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId: queueId }, {
             error: true,
             errorReason: `${err?.message}. Something went wrong`

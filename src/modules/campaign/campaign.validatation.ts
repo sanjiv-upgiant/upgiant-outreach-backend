@@ -97,6 +97,7 @@ export const getEmailFromEmailTemplateValidation = {
                 .required(),
             otherwise: Joi.optional()
         }),
+        emailVerifierId: Joi.string().optional(),
         emailSearchServiceCampaignId: Joi.string().required(),
         openAiIntegrationId: Joi.string().required(),
         outreachAgentId: Joi.string().required(),

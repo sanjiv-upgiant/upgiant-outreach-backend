@@ -6,9 +6,8 @@ FieldName: Required/optional & when to use.
 + + + + + + + + + + + + + + + +
 
 OriginalMessage: required, always populated and not empty
-RecipientInformation: dynamic list of recipient information. Use this field to create personalized email based on given objective
+RecipientInformation: dynamic list of recipient information. Use this field to create personalized email 
 
-Email Objective: required, the objective of the email is specified
 SendersCompanyDomainURL: required, always populated and not empty
 SendersCompanyName: required, always populated and not empty
 SendersCompanyBusinessSummary: required, always populated and not empty
@@ -82,7 +81,6 @@ SendersEmail: {sendersEmail}
 SenderCompanyDomainURL: {sendersCompanyDomainURL}
 SendersCompanyBusinessSummary: {sendersCompanyBusinessSummary}
 SendersProductService: {sendersProductService}
-emailObjective: {objective}
 
 Include following Details for email: {includeDetails}
 

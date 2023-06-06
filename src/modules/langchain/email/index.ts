@@ -53,7 +53,6 @@ interface ICreateEmailBodyArgsManualUpload {
     template: ICampaign["templates"][0],
     senderInformation: ISenderInformation,
     recipientInformation: { [x: string]: any },
-    objective?: string,
     includeDetails?: string,
     openAIApiKey: string,
     gptModelTemperature?: number,
@@ -146,7 +145,7 @@ export const writeEmailBody = async ({ template, openAIApiKey, senderInformation
     return thirdResponse;
 };
 
-export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails = "", gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation, objective, email }: ICreateEmailBodyArgsManualUpload) => {
+export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, senderInformation, includeDetails = "", gptModelTemperature = 0, modelName = "gpt-3.5-turbo", recipientInformation, email }: ICreateEmailBodyArgsManualUpload) => {
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
 
     const { sendersName, sendersEmail = "", sendersCompanyBusinessSummary, sendersCompanyDomainURL = "", sendersProductService = "" } = senderInformation;
@@ -167,7 +166,6 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
         sendersCompanyBusinessSummary,
         sendersProductService,
         includeDetails,
-        objective,
     });
 
 

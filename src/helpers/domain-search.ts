@@ -38,8 +38,9 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
     if (emailVerifierId && contactEmails?.[0]) {
         const firstContactEmail = contactEmails[0].email;
+        const emailPassStatus = ["deliverable", "risky"]
         const verifiedResponse = await getVerifiedEmailAndFirstName(firstContactEmail, emailVerifierId);
-        if (verifiedResponse.status !== "deliverable") {
+        if (!emailPassStatus.includes(verifiedResponse.status)) {
             throw new Error(`${firstContactEmail} cannot be verified as it is in "${verifiedResponse.status}" state.`)
         }
         contactEmails[0].firstName = contactEmails[0].firstName ?? verifiedResponse.firstName ?? "";

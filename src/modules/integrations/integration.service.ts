@@ -16,12 +16,14 @@ export const getCampaignList = async (integrationId: string, user: string, offse
 
 
 export const addNewIntegration = async (integration: IIntegration, user: string) => {
+    const meta: { [x: string]: any } = {};
     if (integration.type === IntegrationTypes.SNOVIO) {
         const accessToken = await getSnovioAccessToken(integration.clientId, integration.clientSecret);
         integration.accessToken = accessToken;
     }
     else if (integration.type === IntegrationTypes.LEMLIST) {
-        await getLemlistTeam(integration.accessToken);
+        const team = await getLemlistTeam(integration.accessToken);
+        meta["team"] = team;
     }
     else if (integration.type === IntegrationTypes.OPENAI) {
         await testOpenAI(integration.accessToken);
@@ -43,7 +45,7 @@ export const addNewIntegration = async (integration: IIntegration, user: string)
         await getEmailableHealth(integration.accessToken);
     }
 
-    const createdIntegration = await IntegrationModel.create({ ...integration, user, meta: {} });
+    const createdIntegration = await IntegrationModel.create({ ...integration, user, meta });
     return createdIntegration;
 }
 

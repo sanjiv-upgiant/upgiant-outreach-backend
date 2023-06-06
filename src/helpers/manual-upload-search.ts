@@ -23,7 +23,7 @@ export const getCsvDataFromCampaign = async (campaignJson: ICampaign) => {
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
     const email = csvData["email"];
-    const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, objective, includeDetails, senderInformation, id, emailSearchServiceCampaignId, emailVerifierId } = campaignJson;
+    const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, includeDetails, senderInformation, id, emailSearchServiceCampaignId, emailVerifierId } = campaignJson;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
     if (!outreachIntegration || !openAIIntegration) {
@@ -32,8 +32,10 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
 
     let verifiedResponse: IEmailVerifierResponse | null = null;
     if (emailVerifierId) {
+        const emailPassStatus = ["deliverable", "risky"]
         verifiedResponse = await getVerifiedEmailAndFirstName(email, emailVerifierId);
-        if (verifiedResponse.status !== "deliverable") {
+
+        if (!emailPassStatus.includes(verifiedResponse.status)) {
             throw new Error(`${email} cannot be verified as it is in "${verifiedResponse.status}" state.`)
         }
     }
@@ -49,7 +51,6 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
             template,
             senderInformation,
             recipientInformation,
-            objective,
             includeDetails,
             openAIApiKey: openAIIntegration.accessToken,
             gptModelTemperature,
