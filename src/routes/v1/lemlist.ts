@@ -10,22 +10,22 @@ router.post("/", async (req, res) => {
         console.log(req.body, 'from lemlist');
         switch (type) {
             case "emailsSent":
-                findAndUpdateByType("emailsSent", campaignId)
+                await findAndUpdateByType("emailsSent", campaignId)
                 break;
             case "emailsOpened":
-                findAndUpdateByType("emailsOpened", campaignId)
+                await findAndUpdateByType("emailsOpened", campaignId)
                 break;
             case "emailsClicked":
-                findAndUpdateByType("emailsClicked", campaignId)
+                await findAndUpdateByType("emailsClicked", campaignId)
                 break;
             case "emailsReplied":
-                findAndUpdateByType("emailsReplied", campaignId)
+                await findAndUpdateByType("emailsReplied", campaignId)
                 break;
             case "emailsBounced":
-                findAndUpdateByType("emailsBounced", campaignId)
+                await findAndUpdateByType("emailsBounced", campaignId)
                 break;
             case "emailsInterested":
-                findAndUpdateByType("emailsInterested", campaignId)
+                await findAndUpdateByType("emailsInterested", campaignId)
                 break;
 
 
@@ -40,7 +40,8 @@ router.post("/", async (req, res) => {
     return res.status(200).send({})
 })
 
-const findAndUpdateByType = async (campaignId: string, type: string) => {
+const findAndUpdateByType = async (type: string, campaignId: string) => {
+    console.log("updating type => ", type, " for campaign " + campaignId);
     await CampaignModel.updateMany({ emailSearchServiceCampaignId: campaignId }, {
         "$inc": {
             [type]: 1
