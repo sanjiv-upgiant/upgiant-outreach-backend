@@ -76,22 +76,22 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
         emailSubjects.push(emailSubject);
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
             const { accessToken } = outreachIntegration;
-            const rightOBody: { [x: string]: string } = {
-                rightOCompanyName: "",
-                rightODesignation: "",
-                rightOFirstName: verifiedResponse?.firstName ?? "",
-                rightOLastName: "",
+            const upgiantBody: { [x: string]: string } = {
+                upgiantCompanyName: "",
+                upgiantDesignation: "",
+                upgiantFirstName: verifiedResponse?.firstName ?? "",
+                upgiantLastName: "",
             };
             for (let i = 0; i < emailBodies.length; i++) {
                 const emailBody = emailBodies[i];
                 const emailSubject = emailSubjects[i] ?? "";
                 if (emailBody) {
-                    rightOBody["icebreaker"] = emailBody;
-                    rightOBody[`rightOEmailSubject`] = emailSubject;
+                    upgiantBody["icebreaker"] = emailBody;
+                    upgiantBody[`upgiantEmailSubject`] = emailSubject;
                 }
             }
 
-            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, email, rightOBody)
+            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, email, upgiantBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url: csvData["email"], campaignId: id }, {
                 isCompleted: true

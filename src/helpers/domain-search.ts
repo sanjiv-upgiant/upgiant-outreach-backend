@@ -96,22 +96,22 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
             const { accessToken } = outreachIntegration;
-            const rightOBody: { [x: string]: string } = {
-                rightOCompanyName: contactEmail["companyName"] ?? "",
-                rightODesignation: contactEmail["position"] ?? "",
-                rightOFirstName: contactEmail["firstName"] ?? "",
-                rightOLastName: contactEmail["lastName"] ?? "",
+            const upgiantBody: { [x: string]: string } = {
+                upgiantCompanyName: contactEmail["companyName"] ?? "",
+                upgiantDesignation: contactEmail["position"] ?? "",
+                upgiantFirstName: contactEmail["firstName"] ?? "",
+                upgiantLastName: contactEmail["lastName"] ?? "",
             };
             for (let i = 0; i < emailBodies.length; i++) {
                 const emailBody = emailBodies[i];
                 const emailSubject = emailSubjects[i] ?? "";
                 if (emailBody) {
-                    rightOBody["icebreaker"] = emailBody;
-                    rightOBody[`rightOEmailSubject`] = emailSubject;
+                    upgiantBody["icebreaker"] = emailBody;
+                    upgiantBody[`upgiantEmailSubject`] = emailSubject;
                 }
             }
 
-            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], rightOBody)
+            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], upgiantBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 isCompleted: true
