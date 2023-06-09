@@ -69,7 +69,6 @@ interface ICreateEmailSubjectArgsManualUpload {
 }
 
 export const writeEmailSubject = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgs) => {
-    const { recipientBusinessSummary = "", recipientBusinessName = "", recipientDesignation = "", recipientBusinessDomainURL = "", recipientName = "" } = recipientInformation;
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
@@ -78,11 +77,7 @@ export const writeEmailSubject = async ({ recipientInformation, emailBody, gptMo
     const initialEmailChain = new LLMChain({ llm, prompt: chatPromptTemplate });
 
     const response = await initialEmailChain.predict({
-        recipientName,
-        recipientBusinessName,
-        recipientDesignation,
-        recipientBusinessDomainURL,
-        recipientBusinessSummary,
+        recipientInformation: JSON.stringify(recipientInformation),
         emailBody
     })
 
