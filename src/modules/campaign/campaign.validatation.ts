@@ -7,6 +7,16 @@ export const getEmailTemplatesFromObjectiveValidation = {
     })
 }
 
+export const editCampaignUrlValidation = {
+    body: Joi.object().keys({
+        emailBody: Joi.string().required(),
+        emailSubject: Joi.string().required(),
+        campaignUrlId: Joi.string().required(),
+        campaignId: Joi.string().required(),
+        voteOnly: Joi.boolean().required(),
+    })
+}
+
 export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),

@@ -3,7 +3,7 @@
 import mongoose from 'mongoose';
 import toJSON from '../toJSON/toJSON';
 import paginate from '../paginate/paginate';
-import { ICampaignUrlDoc, ICampaignUrlModel, IUrlDoc, IUrlModel, UrlStatus } from './campaign.interfaces';
+import { ICampaignUrlDoc, ICampaignUrlModel, IUrlDoc, IUrlModel, IVoteStatus, UrlStatus } from './campaign.interfaces';
 
 const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel>({
     url: {
@@ -49,6 +49,11 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
     },
     contactEmails: {
         type: mongoose.Schema.Types.Mixed
+    },
+    vote: {
+        type: String,
+        enum: IVoteStatus,
+        default: IVoteStatus.NEUTRAL
     }
 })
 

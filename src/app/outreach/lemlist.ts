@@ -1,13 +1,23 @@
 import axios from 'axios';
 import { PROD_BACKEND_URL } from './../../constants';
 import { logger } from './../../modules/logger';
+import { IContactEmail } from 'src/helpers/domain-search';
 
 interface LeadData {
     [x: string]: string
 }
 
-export const addLeadToCampaignUsingLemlist = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
+
+export const addLeadOfCampaignLemlist = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
     const response = await axios.post(
+        `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}`,
+        data,
+    );
+    return response.data;
+};
+
+export const updateLeadOfCampaignLemlist = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
+    const response = await axios.patch(
         `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}`,
         data,
     );
@@ -43,5 +53,16 @@ export const addLemlistWebHookForGivenCampaign = async (accessToken: string) => 
     catch (err) {
         logger.error("lemlist adding webhook error", err);
         return null;
+    }
+}
+
+export const getLemlistLeadBodyFromContactEmails = (emailBody: string, emailSubject: string, contactEmail: IContactEmail) => {
+    return {
+        icebreaker: emailBody,
+        upgiantEmailSubject: emailSubject,
+        upgiantCompanyName: contactEmail?.["companyName"] ?? "",
+        upgiantDesignation: contactEmail?.["position"] ?? "",
+        upgiantFirstName: contactEmail?.["firstName"] ?? "",
+        upgiantLastName: contactEmail?.["lastName"] ?? "",
     }
 }

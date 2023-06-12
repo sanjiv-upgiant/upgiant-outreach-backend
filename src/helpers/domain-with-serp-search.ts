@@ -1,5 +1,5 @@
 
-import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
+import { addLeadOfCampaignLemlist } from "./../app/outreach/lemlist";
 import { cacheSerpApiResponseWithQuery, parseSerpResponse } from "./../app/serp/serpapi";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
@@ -121,7 +121,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                         }
                     }
 
-                    await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail.email, rightOBody)
+                    await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, contactEmail.email, rightOBody)
 
                     await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                         addedToOutreachAgent: true,

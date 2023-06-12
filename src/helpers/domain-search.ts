@@ -1,4 +1,4 @@
-import { addLeadToCampaignUsingLemlist } from "./../app/outreach/lemlist";
+import { addLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails } from "./../app/outreach/lemlist";
 import { CampaignUrlModel } from "./../modules/campaign/Url.model";
 import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
 import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
@@ -96,22 +96,19 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
             const { accessToken } = outreachIntegration;
-            const upgiantBody: { [x: string]: string } = {
-                upgiantCompanyName: contactEmail["companyName"] ?? "",
-                upgiantDesignation: contactEmail["position"] ?? "",
-                upgiantFirstName: contactEmail["firstName"] ?? "",
-                upgiantLastName: contactEmail["lastName"] ?? "",
-            };
-            for (let i = 0; i < emailBodies.length; i++) {
-                const emailBody = emailBodies[i];
-                const emailSubject = emailSubjects[i] ?? "";
-                if (emailBody) {
-                    upgiantBody["icebreaker"] = emailBody;
-                    upgiantBody[`upgiantEmailSubject`] = emailSubject;
-                }
-            }
+            const emailBody = emailBodies?.[0] ?? "";
+            const emailSubject = emailSubjects?.[0] ?? "";
+            const upgiantBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
+            // for (let i = 0; i < emailBodies.length; i++) {
+            //     const emailBody = emailBodies[i];
+            //     const emailSubject = emailSubjects[i] ?? "";
+            //     if (emailBody) {
+            //         upgiantBody["icebreaker"] = emailBody;
+            //         upgiantBody[`upgiantEmailSubject`] = emailSubject;
+            //     }
+            // }
 
-            await addLeadToCampaignUsingLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], upgiantBody)
+            await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], upgiantBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
                 isCompleted: true

@@ -5,7 +5,7 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus, SearchType } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, editUserCampaignUrlService, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 import multer from "multer";
 import path from 'path';
@@ -28,8 +28,9 @@ const jobOptions: JobOptions = {
     attempts: 2,
     backoff: {
         type: "exponential",
-        delay: 10000
-    }
+        delay: 10000,
+    },
+    timeout: 1000 * 60 * 60 * 24
 }
 
 export const getEmailTemplatesController = catchAsync(async (req: Request, res: Response) => {
@@ -100,6 +101,7 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
     res.status(httpStatus.CREATED).send(campaign);
 });
 
+
 // (async () => {
 //     const campaign = await CampaignModel.findById("646cb2eb6f24530390ef4d62");
 //     if (!campaign) {
@@ -115,6 +117,12 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
 //     }
 // });
 
+
+export const editUserCampaignUrlController = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user?.id || "";
+    const updatedCampaignUrl = await editUserCampaignUrlService(user, req.body)
+    res.status(httpStatus.CREATED).send(updatedCampaignUrl.toJSON());
+});
 
 export const getUserCampaignsController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";

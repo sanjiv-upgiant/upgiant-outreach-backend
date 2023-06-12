@@ -99,6 +99,12 @@ export interface IUrlDoc extends IUrl, Document {
 export interface IUrlModel extends Model<IUrlDoc> {
     _id: string
 }
+
+export enum IVoteStatus {
+    LIKE = "LIKE",
+    DISLIKE = "DISLIKE",
+    NEUTRAL = "NEUTRAL"
+}
 export interface ICampaignUrl {
     url: string,
     campaignId: string,
@@ -111,7 +117,8 @@ export interface ICampaignUrl {
     error: boolean,
     addedToOutreachAgent: boolean,
     errorReason: string,
-    contactEmails: any
+    contactEmails: any,
+    vote: IVoteStatus
 }
 
 export interface ICampaignUrlDoc extends ICampaignUrl, Document {

@@ -5,11 +5,11 @@ import { writeEmailBody } from '../langchain/email';
 import { extractCompanySummaryFromTitleAndBody } from '../langchain/summary';
 import { extractTitleAndText } from '../utils/url';
 import { listModels } from './../../app/openai';
-import { addLemlistWebHookForGivenCampaign } from './../../app/outreach/lemlist';
+import { addLemlistWebHookForGivenCampaign, getLemlistLeadBodyFromContactEmails, updateLeadOfCampaignLemlist } from './../../app/outreach/lemlist';
 import scrape from './../../crawler/scraper';
 import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
 import UrlModel, { CampaignUrlModel } from './Url.model';
-import { ICampaign, SearchType, UrlStatus } from './campaign.interfaces';
+import { ICampaign, IVoteStatus, SearchType, UrlStatus } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
 
 interface ICreateTestEmailCampaignArgs extends ICampaign {
@@ -21,6 +21,15 @@ interface ICreateTestEmailCampaignArgs extends ICampaign {
 interface IGetEmailTemplate {
     objective: string;
     page: string;
+}
+
+interface IEditCampaignUrl {
+    emailBody: string,
+    emailSubject: string,
+    campaignUrlId: string,
+    campaignId: string,
+    vote: IVoteStatus,
+    voteOnly: boolean
 }
 
 export const getEmailTemplates = async ({ objective, page }: IGetEmailTemplate) => {
@@ -209,6 +218,39 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
         resultsPerPage: limitInt,
         currentPage: pageInt
     };
+}
+
+export const editUserCampaignUrlService = async (user: string, campaignUrlData: IEditCampaignUrl) => {
+    const { campaignId, campaignUrlId, emailBody, emailSubject, vote = IVoteStatus.NEUTRAL, voteOnly = false } = campaignUrlData;
+    const campaign = await CampaignModel.findById(campaignId);
+
+    if (campaign?.user !== user) {
+        throw new Error("Not authorized for this action")
+    }
+
+    const campaignUrl = await CampaignUrlModel.findById(campaignUrlId);
+    if (!campaignUrl) {
+        throw new Error("Campaign Url not found");
+    }
+    const integration = await IntegrationModel.findById(campaign?.outreachAgentId);
+    if (!integration) {
+        throw new Error("Integration not found");
+    }
+
+    if (voteOnly) {
+        campaignUrl.vote = vote;
+        campaignUrl.save();
+    }
+    else {
+        const contactEmail = campaignUrl.contactEmails?.[0] || {};
+        campaignUrl.emailBody = emailBody;
+        campaignUrl.emailSubject = emailSubject;
+        campaignUrl.save();
+        const updatedLemlistBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
+        await updateLeadOfCampaignLemlist(integration.accessToken, campaign.emailSearchServiceCampaignId, contactEmail.email, updatedLemlistBody);
+    }
+    return campaignUrl;
+
 }
 
 
