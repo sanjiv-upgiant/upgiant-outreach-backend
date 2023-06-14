@@ -1,19 +1,28 @@
 
 import csv from "csv-parser";
 import fs from 'fs';
+import { IManualUploadArgs } from "../campaign/campaign.interfaces";
 
 
-export const parseCsv = async (manualUpload: { file: string, selectedColumnNames: string[], mappedEmail: string }) => {
-    const { file, selectedColumnNames, mappedEmail } = manualUpload;
+export const parseCsv = async (manualUpload: IManualUploadArgs) => {
+    const { file, selectedColumnNames, mappedEmail, mappedCompanyName, mappedFirstName, mappedLastName, mappedPosition } = manualUpload;
     const csvData = await getCsvDataFromFile(file);
     const emailsWithMappedData: { email: string, [x: string]: any }[] = [];
     for (const eachCsvCata of csvData) {
         const email = eachCsvCata[mappedEmail];
+        const firstName = eachCsvCata[mappedFirstName ?? "firstName"];
+        const lastName = eachCsvCata[mappedLastName ?? "lastName"];
+        const companyName = eachCsvCata[mappedCompanyName ?? "companyName"];
+        const position = eachCsvCata[mappedPosition ?? "position"];
         if (email) {
             const valueFromSelectedColumn = getValueFromSelectedColumnNames(selectedColumnNames, eachCsvCata);
             emailsWithMappedData.push({
+                ...valueFromSelectedColumn,
                 email,
-                ...valueFromSelectedColumn
+                firstName,
+                lastName,
+                companyName,
+                position
             })
         }
     }

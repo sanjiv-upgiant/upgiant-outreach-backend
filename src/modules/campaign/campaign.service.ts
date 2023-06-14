@@ -5,7 +5,7 @@ import { writeEmailBody } from '../langchain/email';
 import { extractCompanySummaryFromTitleAndBody } from '../langchain/summary';
 import { extractTitleAndText } from '../utils/url';
 import { listModels } from './../../app/openai';
-import { addLemlistWebHookForGivenCampaign, getLemlistLeadBodyFromContactEmails, updateLeadOfCampaignLemlist } from './../../app/outreach/lemlist';
+import { addLemlistWebHookForGivenCampaign, deleteLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails, updateLeadOfCampaignLemlist } from './../../app/outreach/lemlist';
 import scrape from './../../crawler/scraper';
 import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
 import UrlModel, { CampaignUrlModel } from './Url.model';
@@ -28,8 +28,8 @@ interface IEditCampaignUrl {
     emailSubject: string,
     campaignUrlId: string,
     campaignId: string,
-    vote: IVoteStatus,
-    voteOnly: boolean
+    bodyVote: IVoteStatus,
+    subjectVote: IVoteStatus,
 }
 
 export const getEmailTemplates = async ({ objective, page }: IGetEmailTemplate) => {
@@ -160,7 +160,10 @@ export const getUserCampaigns = async (user: string, page: string, limit: string
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit) || 10;
     const totalResults = await CampaignModel.countDocuments({ user });
-    const campaigns = await CampaignModel.find({ user }).sort({ "_id": -1 })
+    const campaigns = await CampaignModel.find({
+        user,
+        $or: [{ isArchived: false }, { isArchived: { $exists: false } }]
+    }).sort({ "_id": -1 })
         .skip((pageInt - 1) * limitInt)
         .limit(limitInt);
 
@@ -174,8 +177,10 @@ export const getUserCampaigns = async (user: string, page: string, limit: string
 
 }
 
-export const deleteUserCampaign = async (user: string, id: string) => {
-    return CampaignModel.deleteOne({ user, _id: id })
+export const archiveUserCampaign = async (user: string, id: string) => {
+    return CampaignModel.findOneAndUpdate({ user, _id: id }, {
+        isArchived: true
+    })
 }
 
 
@@ -212,8 +217,19 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
         .skip((pageInt - 1) * limitInt)
         .limit(limitInt || limitInt)
 
+    const urlsId = urls.map((url) => url.url);
+    const detailInfoPromise = await Promise.all(urlsId.map(async (id) => {
+        return await UrlModel.findOne({ url: id })
+    }))
+
+
+    const urlsWithDetailInfo = urls.map((url) => ({
+        ...url.toJSON(),
+        detail: detailInfoPromise.find((info) => info?.url === url.url)
+    }))
+
     return {
-        data: urls,
+        data: urlsWithDetailInfo,
         totalResults,
         resultsPerPage: limitInt,
         currentPage: pageInt
@@ -221,7 +237,7 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
 }
 
 export const editUserCampaignUrlService = async (user: string, campaignUrlData: IEditCampaignUrl) => {
-    const { campaignId, campaignUrlId, emailBody, emailSubject, vote = IVoteStatus.NEUTRAL, voteOnly = false } = campaignUrlData;
+    const { campaignId, campaignUrlId, emailBody, emailSubject, bodyVote = IVoteStatus.NEUTRAL, subjectVote = IVoteStatus.NEUTRAL } = campaignUrlData;
     const campaign = await CampaignModel.findById(campaignId);
 
     if (campaign?.user !== user) {
@@ -237,19 +253,48 @@ export const editUserCampaignUrlService = async (user: string, campaignUrlData: 
         throw new Error("Integration not found");
     }
 
-    if (voteOnly) {
-        campaignUrl.vote = vote;
-        campaignUrl.save();
-    }
-    else {
-        const contactEmail = campaignUrl.contactEmails?.[0] || {};
-        campaignUrl.emailBody = emailBody;
-        campaignUrl.emailSubject = emailSubject;
-        campaignUrl.save();
-        const updatedLemlistBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
+    const voteOnly = campaignUrl.emailBody === emailBody && campaignUrl.emailSubject === emailSubject;
+
+    const contactEmail = campaignUrl.contactEmails?.[0] || {};
+    campaignUrl.emailBody = emailBody;
+    campaignUrl.emailSubject = emailSubject;
+    campaignUrl.subjectVote = subjectVote;
+    campaignUrl.bodyVote = bodyVote;
+    const updatedLemlistBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
+    if (!voteOnly) {
         await updateLeadOfCampaignLemlist(integration.accessToken, campaign.emailSearchServiceCampaignId, contactEmail.email, updatedLemlistBody);
     }
+    campaignUrl.save();
     return campaignUrl;
+
+}
+
+export const deleteLeadFromCampaignService = async (user: string, campaignId: string, campaignUrlId: string) => {
+    const campaign = await CampaignModel.findById(campaignId);
+
+    if (campaign?.user !== user) {
+        throw new Error("Not authorized for this action")
+    }
+
+    const integration = await IntegrationModel.findById(campaign?.outreachAgentId);
+    if (!integration) {
+        throw new Error("Integration not found");
+    }
+
+    const campaignUrlModel = await CampaignUrlModel.findById(campaignUrlId);
+    if (!campaignUrlModel) {
+        throw new Error("Not found");
+    }
+
+    const email = campaignUrlModel.contactEmails?.[0]?.email ?? "";
+    if (!email) {
+        throw new Error("Email not found")
+    }
+
+    await deleteLeadOfCampaignLemlist(integration.accessToken, campaign.emailSearchServiceCampaignId, email);
+    campaignUrlModel.addedToOutreachAgent = false;
+    await campaignUrlModel.save();
+
 
 }
 

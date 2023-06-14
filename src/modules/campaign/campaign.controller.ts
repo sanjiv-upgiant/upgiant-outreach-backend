@@ -5,7 +5,7 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus, SearchType } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { createCampaign, createTestEmailFromEmailTemplate, deleteUserCampaign, editUserCampaignUrlService, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { archiveUserCampaign, createCampaign, createTestEmailFromEmailTemplate, deleteLeadFromCampaignService, editUserCampaignUrlService, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 import multer from "multer";
 import path from 'path';
@@ -117,6 +117,15 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
 //     }
 // });
 
+export const deleteLeadFromCampaignController = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user?.id || "";
+    const { campaignId, campaignUrlId } = req.body;
+    await deleteLeadFromCampaignService(user, campaignId, campaignUrlId)
+    res.status(httpStatus.CREATED).send({
+        success: true
+    });
+});
+
 
 export const editUserCampaignUrlController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
@@ -149,7 +158,7 @@ export const getSingleCampaignUrlsController = catchAsync(async (req: Request, r
 export const deleteUserCampaignController = catchAsync(async (req: Request, res: Response) => {
     const user = req.user?.id || "";
     const campaignId = req.params["id"] || "";
-    const userCampaign = await deleteUserCampaign(user, campaignId);
+    const userCampaign = await archiveUserCampaign(user, campaignId);
     res.status(httpStatus.NO_CONTENT).send(userCampaign);
 });
 

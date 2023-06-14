@@ -91,7 +91,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
 
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
             emailSubjects,
-            emailBodies
+            emailBodies,
         });
 
         if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
@@ -111,7 +111,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], upgiantBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                isCompleted: true
+                isCompleted: true,
+                addedToOutreachAgent: true
             });
         }
         break;

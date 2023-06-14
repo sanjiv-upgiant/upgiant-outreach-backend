@@ -14,6 +14,10 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             type: String,
             required: true,
         },
+        isArchived: {
+            type: Boolean,
+            default: false
+        },
         gptModelTemperature: {
             type: Number,
             default: 0
@@ -113,7 +117,11 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
         manualUpload: {
             file: String,
             selectedColumnNames: [String],
-            mappedEmail: String
+            mappedEmail: String,
+            mappedFirstName: String,
+            mappedLastName: String,
+            mappedCompanyName: String,
+            mappedPosition: String
         },
     },
     {

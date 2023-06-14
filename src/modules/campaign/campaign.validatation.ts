@@ -7,13 +7,20 @@ export const getEmailTemplatesFromObjectiveValidation = {
     })
 }
 
+export const deleteLeadFromCampaignValidation = {
+    body: Joi.object().keys({
+        campaignId: Joi.string().required(),
+        campaignUrlId: Joi.string().required(),
+    })
+}
 export const editCampaignUrlValidation = {
     body: Joi.object().keys({
         emailBody: Joi.string().required(),
         emailSubject: Joi.string().required(),
         campaignUrlId: Joi.string().required(),
         campaignId: Joi.string().required(),
-        voteOnly: Joi.boolean().required(),
+        subjectVote: Joi.string().required(),
+        bodyVote: Joi.string().required(),
     })
 }
 
@@ -72,8 +79,12 @@ export const createCampaignValidation = {
             .required().min(1),
         manualUpload: Joi.object({
             file: Joi.string().required(),
-            selectedColumnNames: Joi.array().items(Joi.string().required()).optional(),
-            mappedEmail: Joi.string().required()
+            selectedColumnNames: Joi.array().items(Joi.string().optional()).optional(),
+            mappedEmail: Joi.string().required(),
+            mappedFirstName: Joi.string().optional().allow(""),
+            mappedLastName: Joi.string().optional().allow(""),
+            mappedCompanyName: Joi.string().optional().allow(""),
+            mappedPosition: Joi.string().optional().allow(""),
         }).optional(),
     }),
 };
@@ -136,8 +147,12 @@ export const getEmailFromEmailTemplateValidation = {
         recipientInformation: Joi.any().optional(),
         manualUpload: Joi.object({
             file: Joi.string().required(),
-            selectedColumnNames: Joi.array().items(Joi.string().required()).optional(),
-            mappedEmail: Joi.string().required()
+            selectedColumnNames: Joi.array().items(Joi.string().optional()).optional(),
+            mappedEmail: Joi.string().required(),
+            mappedFirstName: Joi.string().optional().allow(""),
+            mappedLastName: Joi.string().optional().allow(""),
+            mappedCompanyName: Joi.string().optional().allow(""),
+            mappedPosition: Joi.string().optional().allow(""),
         }).optional(),
     }),
 };

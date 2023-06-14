@@ -49,6 +49,7 @@ export interface ICampaign {
     outreachAgentId: string,
     includeDetails: string,
     emailVerifierId: string,
+    isArchived: boolean,
     openAiIntegrationId: string,
     emailSearchServiceCampaignId: string,
     senderInformation: {
@@ -118,7 +119,19 @@ export interface ICampaignUrl {
     addedToOutreachAgent: boolean,
     errorReason: string,
     contactEmails: any,
-    vote: IVoteStatus
+    subjectVote: IVoteStatus,
+    bodyVote: IVoteStatus,
+}
+
+
+export interface IManualUploadArgs {
+    file: string,
+    selectedColumnNames: string[],
+    mappedEmail: string,
+    mappedFirstName?: string,
+    mappedLastName?: string,
+    mappedPosition?: string,
+    mappedCompanyName?: string
 }
 
 export interface ICampaignUrlDoc extends ICampaignUrl, Document {

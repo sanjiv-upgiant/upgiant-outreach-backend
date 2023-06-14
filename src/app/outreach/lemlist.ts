@@ -16,6 +16,12 @@ export const addLeadOfCampaignLemlist = async (accessToken: string, campaignId: 
     return response.data;
 };
 
+export const deleteLeadOfCampaignLemlist = async (accessToken: string, campaignId: string, email: string): Promise<any> => {
+    const response = await axios.delete(
+        `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}?action=remove`);
+    return response.data;
+};
+
 export const updateLeadOfCampaignLemlist = async (accessToken: string, campaignId: string, email: string, data: LeadData): Promise<any> => {
     const response = await axios.patch(
         `https://api.lemlist.com/api/campaigns/${campaignId}/leads/${email}?access_token=${accessToken}`,

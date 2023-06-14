@@ -50,7 +50,12 @@ const campaignUrlSchema = new mongoose.Schema<ICampaignUrlDoc, ICampaignUrlModel
     contactEmails: {
         type: mongoose.Schema.Types.Mixed
     },
-    vote: {
+    subjectVote: {
+        type: String,
+        enum: IVoteStatus,
+        default: IVoteStatus.NEUTRAL
+    },
+    bodyVote: {
         type: String,
         enum: IVoteStatus,
         default: IVoteStatus.NEUTRAL

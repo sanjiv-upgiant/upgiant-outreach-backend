@@ -22,7 +22,7 @@ export const getCsvDataFromCampaign = async (campaignJson: ICampaign) => {
 
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
-    const email = csvData["email"];
+    const { email, firstName = "", lastName = "", position = "", companyName = "" } = csvData;
     const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, includeDetails, senderInformation, id, emailSearchServiceCampaignId, emailVerifierId } = campaignJson;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
@@ -69,7 +69,11 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
             emailSubject: emailSubject,
             emailBody: emailBody,
             contactEmails: [{
-                email
+                email,
+                firstName,
+                lastName,
+                position,
+                companyName
             }]
         });
         emailBodies.push(emailBody);
@@ -80,17 +84,18 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
             const emailSubject = emailSubjects?.[0] ?? "";
 
             const upgiantBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, {
-                firstName: "",
-                lastName: "",
-                position: "",
                 email,
-                companyName: ""
+                firstName,
+                lastName,
+                position,
+                companyName
             });
 
             await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, email, upgiantBody)
 
             await CampaignUrlModel.findOneAndUpdate({ url: csvData["email"], campaignId: id }, {
-                isCompleted: true
+                isCompleted: true,
+                addedToOutreachAgent: true
             });
         }
         break;
