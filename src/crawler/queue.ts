@@ -24,7 +24,7 @@ const getCampaignQueue = (queueId: string) => {
 
         await CampaignUrlModel.findOneAndUpdate({ url, campaignId: queueId }, {
             error: false,
-            errorReason: ``
+            errorReason: ""
         })
 
         if (waitingCount === 0) {

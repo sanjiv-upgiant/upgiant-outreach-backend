@@ -143,7 +143,7 @@ export const getEmailFromEmailTemplateValidation = {
             }))
             .required().min(1),
         url: Joi.string().required(),
-        email: Joi.string().required(),
+        email: Joi.string().optional(),
         recipientInformation: Joi.any().optional(),
         manualUpload: Joi.object({
             file: Joi.string().required(),

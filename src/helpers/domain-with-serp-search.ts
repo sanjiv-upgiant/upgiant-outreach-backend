@@ -68,6 +68,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
             for (const contactEmail of contactEmails.emails) {
                 const emailBodies: string[] = [];
                 const emailSubjects: string[] = [];
+
                 for (const template of templates) {
                     const recipientInformation = {
                         recipientBusinessDomainURL: url,
@@ -87,6 +88,7 @@ export const searchWithSerpAndDomain = async (campaign: ICampaignDoc, websiteUrl
                     });
 
                     const emailSubject = await writeEmailSubject({
+                        template,
                         recipientInformation,
                         emailBody,
                         openAIApiKey: openAIIntegration.accessToken,

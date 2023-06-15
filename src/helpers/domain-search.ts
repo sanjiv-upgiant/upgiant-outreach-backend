@@ -74,6 +74,7 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
             });
 
             const emailSubject = await writeEmailSubject({
+                template,
                 recipientInformation,
                 emailBody,
                 openAIApiKey: openAIIntegration.accessToken,

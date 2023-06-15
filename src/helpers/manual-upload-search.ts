@@ -58,6 +58,7 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
         });
 
         const emailSubject = await writeEmailSubjectForManualUpload({
+            template,
             recipientInformation,
             emailBody,
             openAIApiKey: openAIIntegration.accessToken,

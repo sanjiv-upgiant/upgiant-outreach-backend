@@ -42,6 +42,7 @@ interface ICreateEmailBodyArgs {
 }
 
 interface ICreateEmailSubjectArgs {
+    template: ICampaign["templates"][0],
     recipientInformation: IRecipientInformation,
     emailBody: string,
     openAIApiKey: string,
@@ -61,6 +62,7 @@ interface ICreateEmailBodyArgsManualUpload {
 }
 
 interface ICreateEmailSubjectArgsManualUpload {
+    template: ICampaign["templates"][0],
     recipientInformation: { [x: string]: any },
     emailBody: string,
     openAIApiKey: string,
@@ -68,7 +70,7 @@ interface ICreateEmailSubjectArgsManualUpload {
     modelName?: string,
 }
 
-export const writeEmailSubject = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgs) => {
+export const writeEmailSubject = async ({ template, recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgs) => {
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
@@ -78,7 +80,8 @@ export const writeEmailSubject = async ({ recipientInformation, emailBody, gptMo
 
     const response = await initialEmailChain.predict({
         recipientInformation: JSON.stringify(recipientInformation),
-        emailBody
+        emailBody,
+        template: `${template.subject}`,
     })
 
     return response;
@@ -191,7 +194,7 @@ export const writeEmailBodyUsingManualData = async ({ template, openAIApiKey, se
     return thirdResponse;
 }
 
-export const writeEmailSubjectForManualUpload = async ({ recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgsManualUpload) => {
+export const writeEmailSubjectForManualUpload = async ({ template, recipientInformation, emailBody, gptModelTemperature = 0, openAIApiKey, modelName = "gpt-3.5-turbo" }: ICreateEmailSubjectArgsManualUpload) => {
 
     const llm = new ChatOpenAI({ temperature: gptModelTemperature, openAIApiKey, modelName });
     const systemPromptTemplate = SystemMessagePromptTemplate.fromTemplate(subjectSytemTemplateString);
@@ -201,7 +204,8 @@ export const writeEmailSubjectForManualUpload = async ({ recipientInformation, e
 
     const response = await initialEmailChain.predict({
         recipientInformation: JSON.stringify(recipientInformation),
-        emailBody
+        emailBody,
+        template: `${template.subject}`,
     })
 
     return response;

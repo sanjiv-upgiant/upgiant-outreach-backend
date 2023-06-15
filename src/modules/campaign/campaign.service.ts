@@ -1,4 +1,4 @@
-import { writeEmailBodyUsingManualData } from './../../modules/langchain/email';
+import { writeEmailBodyUsingManualData, writeEmailSubject, writeEmailSubjectForManualUpload } from './../../modules/langchain/email';
 
 import IntegrationModel from '../integrations/integration.model';
 import { writeEmailBody } from '../langchain/email';
@@ -11,6 +11,7 @@ import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
 import UrlModel, { CampaignUrlModel } from './Url.model';
 import { ICampaign, IVoteStatus, SearchType, UrlStatus } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
+import getCampaignQueue from './../../crawler/queue';
 
 interface ICreateTestEmailCampaignArgs extends ICampaign {
     url: string,
@@ -74,7 +75,18 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
                 modelName
             });
 
-            return emailBody;
+            const emailSubject = await writeEmailSubjectForManualUpload({
+                template,
+                recipientInformation,
+                openAIApiKey: openAi.accessToken,
+                gptModelTemperature,
+                modelName,
+                emailBody
+            })
+
+            return {
+                emailBody, emailSubject
+            };
         }
         return;
     }
@@ -125,7 +137,22 @@ export const createTestEmailFromEmailTemplate = async ({ searchType, templates, 
         gptModelTemperature,
         modelName
     });
-    return emailBody;
+
+    const emailSubject = await writeEmailSubject({
+        template: templates[0],
+        recipientInformation: {
+            recipientBusinessDomainURL: url,
+            recipientBusinessSummary: businessInfo,
+            recipientEmail: contactEmail["email"],
+            recipientDesignation: contactEmail["position"],
+            recipientName: contactEmail["firstName"] ?? ""
+        },
+        openAIApiKey: openAi.accessToken,
+        gptModelTemperature,
+        modelName,
+        emailBody
+    })
+    return { emailBody, emailSubject };
 }
 
 export const createCampaign = async (campaign: ICampaign, user: string) => {
@@ -178,6 +205,12 @@ export const getUserCampaigns = async (user: string, page: string, limit: string
 }
 
 export const archiveUserCampaign = async (user: string, id: string) => {
+    const queue = getCampaignQueue(id);
+    const isQueuePaused = await queue.isPaused();
+    if (!isQueuePaused) {
+        queue.pause();
+    }
+
     return CampaignModel.findOneAndUpdate({ user, _id: id }, {
         isArchived: true
     })
@@ -203,8 +236,7 @@ export const getSingleCampaignUrls = async (user: string, _id: string, page: str
 
     const queryFilter: { [x: string]: boolean } = {};
     if (filter === "complete") {
-        queryFilter["isCompleted"] = true;
-        queryFilter["emailExtracted"] = true;
+        queryFilter["addedToOutreachAgent"] = true;
     }
     else if (filter === "incomplete") {
         queryFilter["error"] = true;
@@ -294,8 +326,6 @@ export const deleteLeadFromCampaignService = async (user: string, campaignId: st
     await deleteLeadOfCampaignLemlist(integration.accessToken, campaign.emailSearchServiceCampaignId, email);
     campaignUrlModel.addedToOutreachAgent = false;
     await campaignUrlModel.save();
-
-
 }
 
 
