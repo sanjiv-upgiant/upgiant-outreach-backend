@@ -5,6 +5,8 @@ You are tasked with creating personalized email subjects that match the tone, st
 
 You will be provided with information about the recipient, the email body and email subject template. Make sure output subject copies the tone, style and boice from the email subject template.
 
+Limit the subject line character to 40-60
+
 Only output subject and nothing else.The output should not have the Prefix "Subject:"
 `
 

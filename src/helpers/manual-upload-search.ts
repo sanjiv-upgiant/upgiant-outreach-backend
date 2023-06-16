@@ -22,7 +22,7 @@ export const getCsvDataFromCampaign = async (campaignJson: ICampaign) => {
 
 
 export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJson: ICampaignDoc, csvData: ICsvData) => {
-    const { email, firstName = "", lastName = "", position = "", companyName = "" } = csvData;
+    const { email, firstName = "", lastName = "", position = "", companyName = "", fullName = "" } = csvData;
     const { templates, openAiIntegrationId, outreachAgentId, gptModelTemperature = 0, modelName, includeDetails, senderInformation, id, emailSearchServiceCampaignId, emailVerifierId } = campaignJson;
     const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
     const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
@@ -74,7 +74,8 @@ export const writeEmailAndPublishToLemlistUsingManualUpload = async (campaignJso
                 firstName,
                 lastName,
                 position,
-                companyName
+                companyName,
+                fullName
             }]
         });
         emailBodies.push(emailBody);

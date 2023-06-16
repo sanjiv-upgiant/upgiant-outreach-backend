@@ -120,8 +120,9 @@ const campaignSchema = new mongoose.Schema<ICampaignDoc, ICampaignModel>(
             mappedEmail: String,
             mappedFirstName: String,
             mappedLastName: String,
+            mappedFullName: String,
             mappedCompanyName: String,
-            mappedPosition: String
+            mappedPosition: String,
         },
     },
     {

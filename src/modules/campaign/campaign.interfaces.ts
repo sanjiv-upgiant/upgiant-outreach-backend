@@ -130,6 +130,7 @@ export interface IManualUploadArgs {
     mappedEmail: string,
     mappedFirstName?: string,
     mappedLastName?: string,
+    mappedFullName?: string,
     mappedPosition?: string,
     mappedCompanyName?: string
 }

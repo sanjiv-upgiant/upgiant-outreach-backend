@@ -5,7 +5,7 @@ import { IManualUploadArgs } from "../campaign/campaign.interfaces";
 
 
 export const parseCsv = async (manualUpload: IManualUploadArgs) => {
-    const { file, selectedColumnNames, mappedEmail, mappedCompanyName, mappedFirstName, mappedLastName, mappedPosition } = manualUpload;
+    const { file, selectedColumnNames, mappedEmail, mappedCompanyName, mappedFirstName, mappedLastName, mappedPosition, mappedFullName } = manualUpload;
     const csvData = await getCsvDataFromFile(file);
     const emailsWithMappedData: { email: string, [x: string]: any }[] = [];
     for (const eachCsvCata of csvData) {
@@ -14,6 +14,7 @@ export const parseCsv = async (manualUpload: IManualUploadArgs) => {
         const lastName = eachCsvCata[mappedLastName ?? "lastName"];
         const companyName = eachCsvCata[mappedCompanyName ?? "companyName"];
         const position = eachCsvCata[mappedPosition ?? "position"];
+        const fullName = eachCsvCata[mappedFullName ?? "fullName"];
         if (email) {
             const valueFromSelectedColumn = getValueFromSelectedColumnNames(selectedColumnNames, eachCsvCata);
             emailsWithMappedData.push({
@@ -22,7 +23,8 @@ export const parseCsv = async (manualUpload: IManualUploadArgs) => {
                 firstName,
                 lastName,
                 companyName,
-                position
+                position,
+                fullName
             })
         }
     }

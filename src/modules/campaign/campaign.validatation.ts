@@ -24,6 +24,18 @@ export const editCampaignUrlValidation = {
     })
 }
 
+const manualUploadValidation = Joi.object({
+    file: Joi.string().required(),
+    selectedColumnNames: Joi.array().items(Joi.string().optional()).optional(),
+    mappedEmail: Joi.string().required(),
+    mappedFirstName: Joi.string().optional().allow(""),
+    mappedLastName: Joi.string().optional().allow(""),
+    mappedCompanyName: Joi.string().optional().allow(""),
+    mappedPosition: Joi.string().optional().allow(""),
+    mappedFullName: Joi.string().optional().allow(""),
+}).optional();
+
+
 export const createCampaignValidation = {
     body: Joi.object().keys({
         name: Joi.string().required(),
@@ -77,15 +89,7 @@ export const createCampaignValidation = {
                 subject: Joi.string().required()
             }))
             .required().min(1),
-        manualUpload: Joi.object({
-            file: Joi.string().required(),
-            selectedColumnNames: Joi.array().items(Joi.string().optional()).optional(),
-            mappedEmail: Joi.string().required(),
-            mappedFirstName: Joi.string().optional().allow(""),
-            mappedLastName: Joi.string().optional().allow(""),
-            mappedCompanyName: Joi.string().optional().allow(""),
-            mappedPosition: Joi.string().optional().allow(""),
-        }).optional(),
+        manualUpload: manualUploadValidation
     }),
 };
 
@@ -145,14 +149,6 @@ export const getEmailFromEmailTemplateValidation = {
         url: Joi.string().required(),
         email: Joi.string().optional(),
         recipientInformation: Joi.any().optional(),
-        manualUpload: Joi.object({
-            file: Joi.string().required(),
-            selectedColumnNames: Joi.array().items(Joi.string().optional()).optional(),
-            mappedEmail: Joi.string().required(),
-            mappedFirstName: Joi.string().optional().allow(""),
-            mappedLastName: Joi.string().optional().allow(""),
-            mappedCompanyName: Joi.string().optional().allow(""),
-            mappedPosition: Joi.string().optional().allow(""),
-        }).optional(),
+        manualUpload: manualUploadValidation
     }),
 };
