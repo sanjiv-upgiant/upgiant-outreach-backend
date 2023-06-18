@@ -12,6 +12,8 @@ import { ApiError, errorConverter, errorHandler } from './modules/errors';
 import { morgan } from './modules/logger';
 import { authLimiter } from './modules/utils';
 import routes from './routes/v1';
+import path from "path"
+
 
 const app: Express = express();
 
@@ -29,6 +31,8 @@ app.options('*', cors());
 
 // parse json request body
 app.use(express.json());
+
+app.use(express.static(path.join("exports")));
 
 // parse urlencoded request body
 app.use(express.urlencoded({ extended: true }));

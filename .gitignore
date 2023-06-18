@@ -3,6 +3,8 @@ node_modules
 
 public/
 
+exports/*.csv
+
 # yarn error logs
 yarn-error.log
 

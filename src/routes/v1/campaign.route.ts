@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { auth } from '../../modules/auth';
 import { createCampaignController } from '../../modules/campaign';
-import { deleteLeadFromCampaignController, deleteUserCampaignController, editCampaignController, editUserCampaignUrlController, emailTemplateController, getEmailTemplatesController, getSingleCampaignUrlsController, getUserCampaignsController, getUserSingleCampaignController, uploadCampaignFileController } from '../../modules/campaign/campaign.controller';
+import { deleteLeadFromCampaignController, deleteUserCampaignController, editCampaignController, editUserCampaignUrlController, emailTemplateController, exportCampaignUrlsController, getEmailTemplatesController, getSingleCampaignUrlsController, getUserCampaignsController, getUserSingleCampaignController, uploadCampaignFileController } from '../../modules/campaign/campaign.controller';
 import { createCampaignValidation, deleteLeadFromCampaignValidation, editCampaignUrlValidation, getEmailFromEmailTemplateValidation, getEmailTemplatesFromObjectiveValidation } from '../../modules/campaign/campaign.validatation';
 import { validate } from '../../modules/validate';
 
@@ -19,5 +19,6 @@ router.delete("/:id", auth(), deleteUserCampaignController)
 router.get("/:id/urls", auth(), getSingleCampaignUrlsController)
 router.get("/:id", auth(), getUserSingleCampaignController)
 router.put("/:id/", auth(), editCampaignController)
+router.post("/export/", auth(), exportCampaignUrlsController)
 
 export default router;

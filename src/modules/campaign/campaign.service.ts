@@ -1,17 +1,20 @@
 import { writeEmailBodyUsingManualData, writeEmailSubject, writeEmailSubjectForManualUpload } from './../../modules/langchain/email';
 
+import fastCsv from "fast-csv";
+import fs from "fs";
 import IntegrationModel from '../integrations/integration.model';
 import { writeEmailBody } from '../langchain/email';
 import { extractCompanySummaryFromTitleAndBody } from '../langchain/summary';
 import { extractTitleAndText } from '../utils/url';
 import { listModels } from './../../app/openai';
 import { addLemlistWebHookForGivenCampaign, deleteLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails, updateLeadOfCampaignLemlist } from './../../app/outreach/lemlist';
+import getCampaignQueue from './../../crawler/queue';
 import scrape from './../../crawler/scraper';
 import { getEmailFromEmailFinderServices } from './../../helpers/emailFinder';
 import UrlModel, { CampaignUrlModel } from './Url.model';
 import { ICampaign, IVoteStatus, SearchType, UrlStatus } from './campaign.interfaces';
 import CampaignModel from './campaign.model';
-import getCampaignQueue from './../../crawler/queue';
+
 
 interface ICreateTestEmailCampaignArgs extends ICampaign {
     url: string,
@@ -326,6 +329,41 @@ export const deleteLeadFromCampaignService = async (user: string, campaignId: st
     await deleteLeadOfCampaignLemlist(integration.accessToken, campaign.emailSearchServiceCampaignId, email);
     campaignUrlModel.addedToOutreachAgent = false;
     await campaignUrlModel.save();
+}
+
+export const exportCampaignToCsv = async (campaignInfo: {
+    campaignId: string
+}, user: string) => {
+    const campaign = await CampaignModel.findById(campaignInfo.campaignId);
+    if (campaign?.user !== user) {
+        throw new Error("Not authorized for this action")
+    }
+
+    const validCampaignurls = await CampaignUrlModel.find({
+        campaignId: campaignInfo.campaignId,
+        error: false
+    });
+
+    const arrayCampaignUrls = validCampaignurls.map((campaignUrl) => {
+        const { id, contactEmails, emailBody, emailSubject, url } = campaignUrl.toJSON();
+        return {
+            id,
+            email: contactEmails?.[0].email,
+            emailSubject,
+            emailBody,
+            url
+        }
+    });
+
+    const ws = fs.createWriteStream(`exports/${campaignInfo.campaignId}.csv`);
+
+    return new Promise<void>((resolve, reject) => {
+        fastCsv.write(arrayCampaignUrls, { headers: true }).pipe(ws).on("finish", () => {
+            resolve();
+        }).on("error", (err: any) => {
+            reject(err);
+        })
+    })
 }
 
 

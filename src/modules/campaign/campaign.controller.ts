@@ -5,11 +5,12 @@ import { catchAsync } from "../utils";
 import getCampaignQueue from "./../../crawler/queue";
 import { CampaignRunningStatus, SearchType } from "./campaign.interfaces";
 import CampaignModel from "./campaign.model";
-import { archiveUserCampaign, createCampaign, createTestEmailFromEmailTemplate, deleteLeadFromCampaignService, editUserCampaignUrlService, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
+import { archiveUserCampaign, createCampaign, createTestEmailFromEmailTemplate, deleteLeadFromCampaignService, editUserCampaignUrlService, exportCampaignToCsv, getEmailTemplates, getSingleCampaignUrls, getUserCampaigns, getUserSingleCampaign } from "./campaign.service";
 
 import multer from "multer";
 import path from 'path';
 import { getCsvDataFromCampaign } from './../../helpers/manual-upload-search';
+import fs from "fs"
 
 
 const multerStorage = multer.diskStorage({
@@ -99,6 +100,27 @@ export const createCampaignController = catchAsync(async (req: Request, res: Res
         }
     }
     res.status(httpStatus.CREATED).send(campaign);
+});
+
+export const exportCampaignUrlsController = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user?.id || "";
+    await exportCampaignToCsv(req.body, user);
+    const exportedFile = "exports/" + req.body.campaignId + ".csv"
+    res.setHeader("Content-Disposition", "attachment; filename=filename.csv");
+    res.setHeader("Content-Type", "application/csv");
+    res.download(exportedFile, (err) => {
+        if (err) {
+            res.status(httpStatus.BAD_REQUEST).send('Error sending file');
+        }
+
+        fs.unlink(exportedFile, (unlinkErr) => {
+            if (unlinkErr) {
+                console.error('Error deleting file:', unlinkErr);
+            }
+        })
+
+    });
+
 });
 
 
