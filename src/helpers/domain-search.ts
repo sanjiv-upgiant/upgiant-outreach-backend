@@ -1,4 +1,4 @@
-import { removeSurroundingQuotes } from '@/modules/utils/text';
+import { removeSurroundingQuotes } from './../modules/utils/text';
 import { addLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails } from './../app/outreach/lemlist';
 import { CampaignUrlModel } from './../modules/campaign/Url.model';
 import { ICampaignDoc, IUrlDoc } from './../modules/campaign/campaign.interfaces';
