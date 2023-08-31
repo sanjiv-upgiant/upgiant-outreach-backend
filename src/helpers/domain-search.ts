@@ -1,124 +1,157 @@
-import { addLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails } from "./../app/outreach/lemlist";
-import { CampaignUrlModel } from "./../modules/campaign/Url.model";
-import { ICampaignDoc, IUrlDoc } from "./../modules/campaign/campaign.interfaces";
-import { IntegrationTypes } from "./../modules/integrations/integration.interfaces";
-import IntegrationModel from "./../modules/integrations/integration.model";
-import { writeEmailBody, writeEmailSubject } from "./../modules/langchain/email";
+import { removeSurroundingQuotes } from '@/modules/utils/text';
+import { addLeadOfCampaignLemlist, getLemlistLeadBodyFromContactEmails } from './../app/outreach/lemlist';
+import { CampaignUrlModel } from './../modules/campaign/Url.model';
+import { ICampaignDoc, IUrlDoc } from './../modules/campaign/campaign.interfaces';
+import { IntegrationTypes } from './../modules/integrations/integration.interfaces';
+import IntegrationModel from './../modules/integrations/integration.model';
+import { writeEmailBody, writeEmailSubject } from './../modules/langchain/email';
 import { getEmailFromEmailFinderServices } from './emailFinder';
-import { getVerifiedEmailAndFirstName } from "./emailVerifier";
+import { getVerifiedEmailAndFirstName } from './emailVerifier';
 
 export interface IContactEmail {
-    email: string,
-    firstName?: string,
-    lastName?: string,
-    position?: string
-    companyName?: string,
-    status?: string
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  position?: string;
+  companyName?: string;
+  status?: string;
 }
 
 export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: IUrlDoc) => {
-    const { id: campaignId, emailSearchServiceCampaignId, emailSearchServiceIds, audienceFilters, objective, includeDetails, outreachAgentId, openAiIntegrationId, senderInformation, templates, gptModelTemperature = 0, modelName, emailVerifierId } = campaign;
-    const { url, info } = websiteUrlInfo;
-    const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
-    const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
-    if (!outreachIntegration || !openAIIntegration) {
-        return;
+  const {
+    id: campaignId,
+    emailSearchServiceCampaignId,
+    emailSearchServiceIds,
+    audienceFilters,
+    objective,
+    includeDetails,
+    outreachAgentId,
+    openAiIntegrationId,
+    senderInformation,
+    templates,
+    gptModelTemperature = 0,
+    modelName,
+    emailVerifierId,
+  } = campaign;
+  const { url, info } = websiteUrlInfo;
+  const openAIIntegration = await IntegrationModel.findById(openAiIntegrationId);
+  const outreachIntegration = await IntegrationModel.findById(outreachAgentId);
+  if (!outreachIntegration || !openAIIntegration) {
+    return;
+  }
+
+  const contactEmails = await getEmailFromEmailFinderServices({
+    integrationIds: emailSearchServiceIds,
+    audienceFilters,
+    url,
+  });
+
+  if (!contactEmails || !contactEmails?.length) {
+    await CampaignUrlModel.findOneAndUpdate(
+      { url, campaignId },
+      {
+        error: true,
+        errorReason: '0 emails found',
+      }
+    );
+    return;
+  }
+
+  if (emailVerifierId && contactEmails?.[0]) {
+    const firstContactEmail = contactEmails[0].email;
+    const emailPassStatus = ['deliverable', 'risky'];
+    const verifiedResponse = await getVerifiedEmailAndFirstName(firstContactEmail, emailVerifierId);
+    if (!emailPassStatus.includes(verifiedResponse.status)) {
+      throw new Error(`${firstContactEmail} cannot be verified as it is in "${verifiedResponse.status}" state.`);
     }
+    contactEmails[0].firstName = contactEmails[0].firstName ?? verifiedResponse.firstName ?? '';
+  }
 
-    const contactEmails = await getEmailFromEmailFinderServices({ integrationIds: emailSearchServiceIds, audienceFilters, url });
-
-    if (!contactEmails || !contactEmails?.length) {
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            error: true,
-            errorReason: "0 emails found"
-        });
-        return;
+  await CampaignUrlModel.findOneAndUpdate(
+    { url, campaignId },
+    {
+      emailExtracted: true,
+      contactEmails,
     }
+  );
 
+  for (const contactEmail of contactEmails) {
+    const emailBodies: string[] = [];
+    const emailSubjects: string[] = [];
+    for (const template of templates) {
+      const recipientInformation = {
+        recipientBusinessDomainURL: url,
+        recipientBusinessSummary: info,
+        recipientEmail: contactEmail['email'],
+        recipientDesignation: contactEmail['position'],
+        recipientName: contactEmail['firstName'] ?? '',
+      };
+      const emailBody = await writeEmailBody({
+        template,
+        senderInformation,
+        recipientInformation,
+        objective,
+        includeDetails,
+        openAIApiKey: openAIIntegration.accessToken,
+        gptModelTemperature,
+        modelName,
+      });
 
-    if (emailVerifierId && contactEmails?.[0]) {
-        const firstContactEmail = contactEmails[0].email;
-        const emailPassStatus = ["deliverable", "risky"]
-        const verifiedResponse = await getVerifiedEmailAndFirstName(firstContactEmail, emailVerifierId);
-        if (!emailPassStatus.includes(verifiedResponse.status)) {
-            throw new Error(`${firstContactEmail} cannot be verified as it is in "${verifiedResponse.status}" state.`)
+      const emailSubject = await writeEmailSubject({
+        template,
+        recipientInformation,
+        emailBody,
+        openAIApiKey: openAIIntegration.accessToken,
+        gptModelTemperature,
+        modelName,
+      });
+
+      await CampaignUrlModel.findOneAndUpdate(
+        { url, campaignId },
+        {
+          emailSubject: emailSubject,
+          emailBody: emailBody,
         }
-        contactEmails[0].firstName = contactEmails[0].firstName ?? verifiedResponse.firstName ?? "";
+      );
+      emailBodies.push(emailBody);
+      emailSubjects.push(emailSubject);
     }
 
-    await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-        emailExtracted: true,
-        contactEmails
-    });
+    await CampaignUrlModel.findOneAndUpdate(
+      { url, campaignId },
+      {
+        emailSubjects,
+        emailBodies,
+      }
+    );
 
-    for (const contactEmail of contactEmails) {
-        const emailBodies: string[] = [];
-        const emailSubjects: string[] = [];
-        for (const template of templates) {
-            const recipientInformation = {
-                recipientBusinessDomainURL: url,
-                recipientBusinessSummary: info,
-                recipientEmail: contactEmail["email"],
-                recipientDesignation: contactEmail["position"],
-                recipientName: contactEmail["firstName"] ?? ""
-            }
-            const emailBody = await writeEmailBody({
-                template,
-                senderInformation,
-                recipientInformation,
-                objective,
-                includeDetails,
-                openAIApiKey: openAIIntegration.accessToken,
-                gptModelTemperature,
-                modelName
-            });
+    if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
+      const { accessToken } = outreachIntegration;
+      const emailBody = emailBodies?.[0] ?? '';
+      const emailSubject = removeSurroundingQuotes(emailSubjects?.[0] ?? '');
+      const upgiantBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
+      // for (let i = 0; i < emailBodies.length; i++) {
+      //     const emailBody = emailBodies[i];
+      //     const emailSubject = emailSubjects[i] ?? "";
+      //     if (emailBody) {
+      //         upgiantBody["icebreaker"] = emailBody;
+      //         upgiantBody[`upgiantEmailSubject`] = emailSubject;
+      //     }
+      // }
 
-            const emailSubject = await writeEmailSubject({
-                template,
-                recipientInformation,
-                emailBody,
-                openAIApiKey: openAIIntegration.accessToken,
-                gptModelTemperature,
-                modelName
-            })
+      await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, contactEmail['email'], upgiantBody);
 
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                emailSubject: emailSubject,
-                emailBody: emailBody
-            });
-            emailBodies.push(emailBody);
-            emailSubjects.push(emailSubject);
+      await CampaignUrlModel.findOneAndUpdate(
+        { url, campaignId },
+        {
+          isCompleted: true,
+          addedToOutreachAgent: true,
         }
-
-        await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-            emailSubjects,
-            emailBodies,
-        });
-
-        if (outreachIntegration.type === IntegrationTypes.LEMLIST) {
-            const { accessToken } = outreachIntegration;
-            const emailBody = emailBodies?.[0] ?? "";
-            const emailSubject = emailSubjects?.[0] ?? "";
-            const upgiantBody = getLemlistLeadBodyFromContactEmails(emailBody, emailSubject, contactEmail);
-            // for (let i = 0; i < emailBodies.length; i++) {
-            //     const emailBody = emailBodies[i];
-            //     const emailSubject = emailSubjects[i] ?? "";
-            //     if (emailBody) {
-            //         upgiantBody["icebreaker"] = emailBody;
-            //         upgiantBody[`upgiantEmailSubject`] = emailSubject;
-            //     }
-            // }
-
-            await addLeadOfCampaignLemlist(accessToken, emailSearchServiceCampaignId, contactEmail["email"], upgiantBody)
-
-            await CampaignUrlModel.findOneAndUpdate({ url, campaignId }, {
-                isCompleted: true,
-                addedToOutreachAgent: true
-            });
-        }
-        break;
+      );
     }
-}
+    break;
+  }
+};
 
 // (async () => {
 //     const campaign = await CampaignModel.findById("6468cbf69b33fbb7a5942fa1");
