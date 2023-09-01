@@ -109,8 +109,8 @@ export const searchWithDomain = async (campaign: ICampaignDoc, websiteUrlInfo: I
       await CampaignUrlModel.findOneAndUpdate(
         { url, campaignId },
         {
-          emailSubject: emailSubject,
-          emailBody: emailBody,
+          emailSubject,
+          emailBody,
         }
       );
       emailBodies.push(emailBody);

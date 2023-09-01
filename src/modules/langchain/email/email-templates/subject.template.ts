@@ -7,7 +7,7 @@ The length of the subject line should be optimized for maximizing email open rat
 
 You will be provided with information about the recipient, the intent of the email, and the email body for each task.
 
-The output should not have the Prefix "Subject:". 
+The output should not have the Prefix "Subject:" and return subject without quotes "". 
 
 `;
 
@@ -18,4 +18,4 @@ RecipientInformation: {recipientInformation}
 EMAIL BODY: \n {emailBody}
 EMAIL SUBJECT TEMPLATE: \n {template}
 
-SUBJECT: `;
+SUBJECT WITHOUT QUOTES: `;
