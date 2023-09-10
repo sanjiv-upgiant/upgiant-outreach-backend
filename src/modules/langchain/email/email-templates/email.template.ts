@@ -67,7 +67,7 @@ Voice: What is the voice of the OriginalMessage?  The PersonalizedMessage should
 Structure: How many sentences is the OriginalMessage, and what are the line breaks? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
 Length: How long (characters/words) is the OriginalMessage? The PersonalizedMessage should be roughly the same length as the OriginalMessage.
 Emojis: Does the OriginalMessage make use of emojis? The PersonalizedMessage should use emojis too if the OriginalMessage used emojis.
-`
+`;
 
 export const humanPromptTemplateStringForManualUpload = `
 Here's the details of the email.
@@ -91,7 +91,7 @@ About the PersonalizedMessage:
 >> Don't include placeholder fields, or merge fields like {{ * }}
 >> Avoid using words that might be considered spammy or cause an email to get flagged for spam
 >> Do NOT write "PersonalizedMessage:" before the email body, just write the email body
-`
+`;
 
 export const humanPromptTemplateStringForInitialOutput = `
 Here's the details of the email.

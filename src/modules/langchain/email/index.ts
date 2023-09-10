@@ -147,6 +147,8 @@ export const writeEmailBody = async ({
     includeDetails,
   });
 
+  if (modelName === 'gpt-4') return initialResponse;
+
   const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(
     systemPromptTemplateStringForSecondPass
   );
@@ -221,6 +223,8 @@ export const writeEmailBodyUsingManualData = async ({
     sendersProductService,
     includeDetails,
   });
+
+  if (modelName === 'gpt-4') return initialResponse;
 
   const systemPromptTemplateForSecondPass = SystemMessagePromptTemplate.fromTemplate(
     systemPromptTemplateStringForSecondPass
